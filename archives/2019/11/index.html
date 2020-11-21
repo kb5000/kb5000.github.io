@@ -6,11 +6,11 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://yoursite.com">
-  <title>KB5000</title>
+  <title>Archives: 2019/11 | KB5000</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta property="og:type" content="website">
 <meta property="og:title" content="KB5000">
-<meta property="og:url" content="http://yoursite.com/index.html">
+<meta property="og:url" content="http://yoursite.com/archives/2019/11/index.html">
 <meta property="og:site_name" content="KB5000">
 <meta property="og:locale" content="en_US">
 <meta property="article:author" content="KB5000">
@@ -126,275 +126,47 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-Openwrt连接L2TP环境网络配置详解" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/11/21/Openwrt%E8%BF%9E%E6%8E%A5L2TP%E7%8E%AF%E5%A2%83%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE%E8%AF%A6%E8%A7%A3/">Openwrt连接L2TP环境网络配置详解</a>
-    </h1>
-  
-
-        
-        <a href="/2020/11/21/Openwrt%E8%BF%9E%E6%8E%A5L2TP%E7%8E%AF%E5%A2%83%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE%E8%AF%A6%E8%A7%A3/" class="archive-article-date">
-  	<time datetime="2020-11-21T02:09:06.273Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-11-21</time>
-</a>
-        
-      </header>
     
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>最近入手了一台刷入OpenWrt的路由器，但校园网需要使用静态地址+L2TP接入，因此配置的过程出现了很多问题，特此记录。</p>
-<h5 id="下载L2TP软件包"><a href="#下载L2TP软件包" class="headerlink" title="下载L2TP软件包"></a>下载L2TP软件包</h5><p>这个步骤是为了给所有没有预装xl2tpd的（大部分应该没有）路由器安装xl2tpd，它与其他部分不是连续的关系，所以首先要进行这一步。</p>
-<p>要配置L2TP首先需要让路由器拥有xl2tpd这个软件包。如果没有也不要紧，我们可以让电脑给路由器共享网络。这个过程需要1台主电脑（同时有有线口和Wi-Fi口），1个辅电脑。接下来按如下步骤接线</p>
-<ol>
-<li><p>首先在路由器的 网络–无线 页面保证无线是开启的，如果不是请点击 重启无线 打开。这里可以直接配置自己的无线名字和密码，配好后用手机连接上。<br>注意，重启无线后可能需要在路由器中执行该命令，原因请参考配置内网部分：<code>ip rule add from all lookup main pref 0</code></p>
-</li>
-<li><p>在路由器的 网络–接口 页面中修改Wan口，协议改为静态IP，IP地址是 192.168.3.2，子网掩码 255.255.255.0，网关 192.168.3.1，DNS 223.5.5.5，其它留空即可，保存应用。</p>
-</li>
-<li><p>电脑的有线口连接路由器的Wan口，电脑的无线连接其它可以上网的Wi-Fi（不能是一会要使用的手机的热点，否则还需要一个设备）。</p>
-</li>
-<li><p>在电脑的开始菜单搜索 查看网络连接，在弹出的窗口中右击WLAN–属性，在上面点击 共享，首先在下面的下拉框中选择你的有线网卡（一般是 以太网），再勾选 允许其他网络用户通过此计算机的Internet连接来连接。如果弹出任何对话框请确定。</p>
-</li>
-<li><p>在网络连接的窗口右击 以太网–属性，往下找到Internet协议版本4，双击，点击“使用下面的IP地址”，修改地址为192.168.3.1，子网掩码 255.255.255.0，确定即可。</p>
-</li>
-<li><p>现在用另一台设备连接OpenWrt的Wi-Fi（或是连接网线也可以），进入它的后台页面，在 系统–TTYD 中打开终端，输入如下命令：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">opkg update &amp;&amp; opkg install xl2tpd</span><br></pre></td></tr></table></figure>
-
-<p>如果提示错误，请考虑更换软件源。</p>
-</li>
-<li><p>如果安装成功，那么说明已经安装了xl2tpd软件，可以断开连线并在主电脑中取消共享网络了。</p>
-</li>
-</ol>
-<h3 id="配置内网"><a href="#配置内网" class="headerlink" title="配置内网"></a>配置内网</h3><p>要配置内网IPv4，首先在OpenWrt后台切换到 网络–接口 页面，同时在右侧的接口列表中修改WAN接口。我们切换协议为静态地址，并填写自己通过其它途径分配好的IP地址和DNS服务器。对于浙大玉泉校区的网络环境来说，需要首先在公寓公众号上申请IP地址，填入路由器的MAC地址（WAN口），并等待1天，第二天就可以ping通网关，从而进行后续的配置。</p>
-<p>不出所料的话，目前路由器除了能够ping通内网地址，域名是查找不到的。这是因为很多版本的OpenWrt默认屏蔽了RFC1918，也就是如果对公网域名解析得到的IP是机器所在的内网网段IP（自己的IP在10.0.0.0/8，内网网站也在10.0.0.0/8），就会屏蔽掉这条信息。要解决这个，请在 网络–DHCP/DNS 页中找到RFC1918并取消勾选，保存应用。</p>
-<p>此时的现象应该是路由器可以ping通内网地址，不论是域名还是IP。但是可能主机除了能ping通网关，但不能ping通其它地址。这其实是路由表的问题。Linux下有一种称为“策略路由”的高级路由方法，它可以根据不同的策略转发到不同的（最多256个）路由表并执行不同的路由。而从路由器发出的ping和从主机发出的ping默认走的不是同一个路由表，因此出现了上述的问题。我们可以用下面的命令简单地让所有经过路由器的数据都走主路由表，这样我们设置一个路由表就相当于设置所有的路由，在当前的网络情况下是没问题的。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ip rule add from all lookup main pref 0</span><br></pre></td></tr></table></figure>
-
-<p>我们最好将这个配置保存起来以便每次开机自动执行。修改/etc/rc.local文件，在前面增加两行：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ip rule add from all lookup main pref 0</span><br><span class="line">ip -6 rule add from all lookup main pref 0</span><br></pre></td></tr></table></figure>
-
-<p>每次无线网络重启时也需要执行这两句。</p>
-<p>现在应该可以在主机上打开校园网内的各网站了。</p>
-<h3 id="配置L2TP"><a href="#配置L2TP" class="headerlink" title="配置L2TP"></a>配置L2TP</h3><p>配置L2TP的前提是内网畅通并已经安装好了xl2tpd软件包。这里采用内建L2TP连接的方式，如果不行的话可以命令行再行配置。</p>
-<p>在路由器后台中打开 网络–接口，添加一个接口，协议选择L2TP，填入地址，用户名，密码，同时选择防火墙区域（可能切换到其它选项卡）为Wan区域（或者有专门的VPN区域则选择那个），最后连接，可能需要重启路由器。</p>
-<p>重启后会发现已经连接上了L2TP，并可以正常上网了，这是最好的情况。</p>
-<p>如果不能，那么需要查看原因：</p>
-<ol>
-<li>L2TP接口没有IP，没获取到地址：VPN没有启动成功，如果重启不行的话那么可能需要先在命令行中配置，否则可以考虑更换OpenWrt固件</li>
-<li>L2TP接口获取到了IP，但路由器ping不通外网：策略路由问题，执行前述ip rule命令</li>
-</ol>
-<p>手动配置L2TP可以参考如下教程：<a href="https://atomlab.org/post/code/rpi-router/" target="_blank" rel="noopener">https://atomlab.org/post/code/rpi-router/</a></p>
-<p>附上当时解决L2TP接口没IP的方案：先手动配置，然后修改该接口的物理接口为ppp0，然后重新配置，重启</p>
-<h3 id="配置IPv6"><a href="#配置IPv6" class="headerlink" title="配置IPv6"></a>配置IPv6</h3><p>不得不说OpenWrt对IPv6的支持仍然有待改进，但通过如下的方式可以实现IPv6中继的联网方式：每个设备可以获取公网IP，路由器也有IPv6地址。</p>
-<ol>
-<li><p>在 网络–DHCP/DNS 的高级设置中取消勾选禁止解析IPv6 DNS记录。</p>
-</li>
-<li><p>路由器的终端中修改/etc/config/dhcp文件，找到config dhcp ‘lan’，把对应项修改/添加：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">option ra &#39;hybrid&#39;</span><br><span class="line">option dhcpv6 &#39;hybrid&#39;</span><br><span class="line">option ndp &#39;hybrid&#39;</span><br><span class="line">option ra_management &#39;1&#39;</span><br><span class="line">option ra_default &#39;1&#39;</span><br></pre></td></tr></table></figure>
-
-<p>找到config dhcp ‘wan’，整个项修改为如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">config dhcp &#39;wan6&#39;</span><br><span class="line">	option interface &#39;wan&#39;</span><br><span class="line">	option ra &#39;hybrid&#39;</span><br><span class="line">	option dhcpv6 &#39;hybrid&#39;</span><br><span class="line">	option ndp &#39;hybrid&#39;</span><br><span class="line">	option master &#39;1&#39;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>重启，应该可以在电脑中获取到IPv6的地址了</p>
-</li>
-</ol>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
+    
       
       
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/11/21/Openwrt%E8%BF%9E%E6%8E%A5L2TP%E7%8E%AF%E5%A2%83%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE%E8%AF%A6%E8%A7%A3/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
+      <section class="archives-wrap">
+        <div class="archive-year-wrap">
+          <a href="/archives/2019" class="archive-year">2019</a>
         </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-远程搭建反向穿透RVPN" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
+        <div class="archives">
     
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/11/19/%E8%BF%9C%E7%A8%8B%E6%90%AD%E5%BB%BA%E5%8F%8D%E5%90%91%E7%A9%BF%E9%80%8FRVPN/">远程搭建反向穿透RVPN</a>
-    </h1>
-  
-
-        
-        <a href="/2019/11/19/%E8%BF%9C%E7%A8%8B%E6%90%AD%E5%BB%BA%E5%8F%8D%E5%90%91%E7%A9%BF%E9%80%8FRVPN/" class="archive-article-date">
+    <article class="archive-article archive-type-post">
+  <div class="archive-article-inner">
+    <header class="archive-article-header">
+      	<div class="article-meta">
+	      	<a href="/2019/11/19/%E8%BF%9C%E7%A8%8B%E6%90%AD%E5%BB%BA%E5%8F%8D%E5%90%91%E7%A9%BF%E9%80%8FRVPN/" class="archive-article-date">
   	<time datetime="2019-11-19T15:46:27.067Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-11-19</time>
 </a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>为了在非内网环境下访问校网，同时规避掉原来速度慢且极为臃肿的RVPN，这里搭建了一个基于SSH的RVPN，当然了，性能可能较差，只能供个人使用。</p>
-<p>核心命令：利用SSH的DNAT功能，在客户端建立一个SOCKS5代理，从而使网络流量走SSH隧道。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh -NfD 1088 pi@rte.un</span><br></pre></td></tr></table></figure>
-
-<p>这里，N代表不打开shell，我们只进行网络代理，不需要shell；f代表让ssh自动到后台运行；而D则是建立一个动态端口转发隧道，也就是打开了SOCKS5隧道，这里将隧道建立在了1088端口。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2019/11/19/%E8%BF%9C%E7%A8%8B%E6%90%AD%E5%BB%BA%E5%8F%8D%E5%90%91%E7%A9%BF%E9%80%8FRVPN/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
         </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-利用路由表实现校园内网不经过VPN" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
+    	 
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2019/10/21/%E5%88%A9%E7%94%A8%E8%B7%AF%E7%94%B1%E8%A1%A8%E5%AE%9E%E7%8E%B0%E6%A0%A1%E5%9B%AD%E5%86%85%E7%BD%91%E4%B8%8D%E7%BB%8F%E8%BF%87VPN/">利用路由表实现校园内网不经过VPN</a>
+      <a class="archive-article-title" href="/2019/11/19/%E8%BF%9C%E7%A8%8B%E6%90%AD%E5%BB%BA%E5%8F%8D%E5%90%91%E7%A9%BF%E9%80%8FRVPN/">远程搭建反向穿透RVPN</a>
     </h1>
   
 
-        
-        <a href="/2019/10/21/%E5%88%A9%E7%94%A8%E8%B7%AF%E7%94%B1%E8%A1%A8%E5%AE%9E%E7%8E%B0%E6%A0%A1%E5%9B%AD%E5%86%85%E7%BD%91%E4%B8%8D%E7%BB%8F%E8%BF%87VPN/" class="archive-article-date">
-  	<time datetime="2019-10-21T15:15:52.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-10-21</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>最近在宿舍添置了一台路由器。。结果现在的问题就是访问校内网络时候不能享受到20MB/s的内网速度了。所以找了一下，用路由表编辑是可行的。</p>
-<p>首先我们进入路由器的后台（openwrt环境，包含busybox），利用<code>route</code>命令查看一下原有的路由表</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Kernel IP routing table</span><br><span class="line">Destination     Gateway         Genmask         Flags Metric Ref    Use Iface</span><br><span class="line">default         *               0.0.0.0         U     0      0        0 l2tp-vpn</span><br><span class="line">10.0.2.73       10.171.32.1     255.255.255.255 UGH   0      0        0 eth2.2</span><br><span class="line">10.0.2.73       *               255.255.255.255 UH    0      0        0 l2tp-vpn</span><br><span class="line">10.171.32.0     *               255.255.240.0   U     0      0        0 eth2.2</span><br><span class="line">192.168.199.0   *               255.255.255.0   U     0      0        0 br-lan</span><br><span class="line">192.168.200.0   *               255.255.255.0   U     0      0        0 br-lan1</span><br></pre></td></tr></table></figure>
+        <div class="article-info info-on-right">
+          
+          
 
-<p>可以看到现在所有的外网和内网IP都是走VPN的。最简单的方案就是按照下列添加路由表：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">route add -net 10.0.0.0&#x2F;8 gw 10.171.32.1 dev eth2.2</span><br></pre></td></tr></table></figure>
-
-<p>但是，在重新连接之后网关IP会改变，我们可以使用另一种方式，也就是黑名单的实现方式。<br>我们知道，对于IP<code>10.0.0.0/8</code>，其第一个字节对应的二进制位为<code>00001010</code>，我们可以求反向的IP及其掩码。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">10000000	128.0.0.0&#x2F;1</span><br><span class="line">01000000	64.0.0.0&#x2F;2</span><br><span class="line">00100000	32.0.0.0&#x2F;3</span><br><span class="line">00010000	16.0.0.0&#x2F;4</span><br><span class="line">00001100	12.0.0.0&#x2F;6</span><br><span class="line">00001011	11.0.0.0&#x2F;8</span><br><span class="line">00001000	8.0.0.0&#x2F;7</span><br><span class="line">00000100	4.0.0.0&#x2F;6</span><br><span class="line">00000010	2.0.0.0&#x2F;7</span><br><span class="line">00000000	0.0.0.0&#x2F;7</span><br></pre></td></tr></table></figure>
-
-<p>我们只需对上述10条做VPN路由即可。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">route del -net 0.0.0.0&#x2F;0</span><br><span class="line">route add -net 128.0.0.0&#x2F;1 dev l2tp-vpn</span><br><span class="line">route add -net 64.0.0.0&#x2F;2 dev l2tp-vpn</span><br><span class="line">route add -net 32.0.0.0&#x2F;3 dev l2tp-vpn</span><br><span class="line">route add -net 16.0.0.0&#x2F;4 dev l2tp-vpn</span><br><span class="line">route add -net 12.0.0.0&#x2F;6 dev l2tp-vpn</span><br><span class="line">route add -net 11.0.0.0&#x2F;8 dev l2tp-vpn</span><br><span class="line">route add -net 8.0.0.0&#x2F;7 dev l2tp-vpn</span><br><span class="line">route add -net 4.0.0.0&#x2F;6 dev l2tp-vpn</span><br><span class="line">route add -net 2.0.0.0&#x2F;7 dev l2tp-vpn</span><br><span class="line">route add -net 0.0.0.0&#x2F;7 dev l2tp-vpn</span><br></pre></td></tr></table></figure>
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">树莓派</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2019/10/21/%E5%88%A9%E7%94%A8%E8%B7%AF%E7%94%B1%E8%A1%A8%E5%AE%9E%E7%8E%B0%E6%A0%A1%E5%9B%AD%E5%86%85%E7%BD%91%E4%B8%8D%E7%BB%8F%E8%BF%87VPN/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
+        </div>
+        <div class="clearfix"></div>
+    </header>
   </div>
 </article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
   
   
+    </div></section>
+  
+
+    
 
 
           </div>
@@ -416,9 +188,9 @@
     <script>
 	var yiliaConfig = {
 		mathjax: true,
-		isHome: true,
+		isHome: false,
 		isPost: false,
-		isArchive: false,
+		isArchive: true,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,

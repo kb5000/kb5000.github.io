@@ -9,14 +9,16 @@
   <title>利用路由表实现校园内网不经过VPN | KB5000</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="最近在宿舍添置了一台路由器。。结果现在的问题就是访问校内网络时候不能享受到20MB&#x2F;s的内网速度了。所以找了一下，用路由表编辑是可行的。 首先我们进入路由器的后台（openwrt环境，包含busybox），利用route命令查看一下原有的路由表 12345678Kernel IP routing tableDestination     Gateway         Genmask">
-<meta name="keywords" content="树莓派">
 <meta property="og:type" content="article">
 <meta property="og:title" content="利用路由表实现校园内网不经过VPN">
-<meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;10&#x2F;21&#x2F;%E5%88%A9%E7%94%A8%E8%B7%AF%E7%94%B1%E8%A1%A8%E5%AE%9E%E7%8E%B0%E6%A0%A1%E5%9B%AD%E5%86%85%E7%BD%91%E4%B8%8D%E7%BB%8F%E8%BF%87VPN&#x2F;index.html">
+<meta property="og:url" content="http://yoursite.com/2019/10/21/%E5%88%A9%E7%94%A8%E8%B7%AF%E7%94%B1%E8%A1%A8%E5%AE%9E%E7%8E%B0%E6%A0%A1%E5%9B%AD%E5%86%85%E7%BD%91%E4%B8%8D%E7%BB%8F%E8%BF%87VPN/index.html">
 <meta property="og:site_name" content="KB5000">
 <meta property="og:description" content="最近在宿舍添置了一台路由器。。结果现在的问题就是访问校内网络时候不能享受到20MB&#x2F;s的内网速度了。所以找了一下，用路由表编辑是可行的。 首先我们进入路由器的后台（openwrt环境，包含busybox），利用route命令查看一下原有的路由表 12345678Kernel IP routing tableDestination     Gateway         Genmask">
-<meta property="og:locale" content="en">
-<meta property="og:updated_time" content="2019-10-21T15:15:52.039Z">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2019-10-21T15:15:52.000Z">
+<meta property="article:modified_time" content="2019-10-22T11:48:57.596Z">
+<meta property="article:author" content="KB5000">
+<meta property="article:tag" content="树莓派">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternative" href="/atom.xml" title="KB5000" type="application/atom+xml">
@@ -35,7 +37,7 @@
 
   
 
-</head>
+<meta name="generator" content="Hexo 4.2.1"></head>
 
 <body>
   <div id="container" q-class="show:isCtnShow">
@@ -152,11 +154,13 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Kernel IP routing table</span><br><span class="line">Destination     Gateway         Genmask         Flags Metric Ref    Use Iface</span><br><span class="line">default         *               0.0.0.0         U     0      0        0 l2tp-vpn</span><br><span class="line">10.0.2.73       10.171.32.1     255.255.255.255 UGH   0      0        0 eth2.2</span><br><span class="line">10.0.2.73       *               255.255.255.255 UH    0      0        0 l2tp-vpn</span><br><span class="line">10.171.32.0     *               255.255.240.0   U     0      0        0 eth2.2</span><br><span class="line">192.168.199.0   *               255.255.255.0   U     0      0        0 br-lan</span><br><span class="line">192.168.200.0   *               255.255.255.0   U     0      0        0 br-lan1</span><br></pre></td></tr></table></figure>
 
 <p>可以看到现在所有的外网和内网IP都是走VPN的。最简单的方案就是按照下列添加路由表：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">route add -net 10.0.0.0/8 gw 10.171.32.1 dev eth2.2</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">route add -net 10.0.0.0&#x2F;8 gw 10.171.32.1 dev eth2.2</span><br></pre></td></tr></table></figure>
+
 <p>但是，在重新连接之后网关IP会改变，我们可以使用另一种方式，也就是黑名单的实现方式。<br>我们知道，对于IP<code>10.0.0.0/8</code>，其第一个字节对应的二进制位为<code>00001010</code>，我们可以求反向的IP及其掩码。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">10000000	128.0.0.0/1</span><br><span class="line">01000000	64.0.0.0/2</span><br><span class="line">00100000	32.0.0.0/3</span><br><span class="line">00010000	16.0.0.0/4</span><br><span class="line">00001100	12.0.0.0/6</span><br><span class="line">00001011	11.0.0.0/8</span><br><span class="line">00001000	8.0.0.0/7</span><br><span class="line">00000100	4.0.0.0/6</span><br><span class="line">00000010	2.0.0.0/7</span><br><span class="line">00000000	0.0.0.0/7</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">10000000	128.0.0.0&#x2F;1</span><br><span class="line">01000000	64.0.0.0&#x2F;2</span><br><span class="line">00100000	32.0.0.0&#x2F;3</span><br><span class="line">00010000	16.0.0.0&#x2F;4</span><br><span class="line">00001100	12.0.0.0&#x2F;6</span><br><span class="line">00001011	11.0.0.0&#x2F;8</span><br><span class="line">00001000	8.0.0.0&#x2F;7</span><br><span class="line">00000100	4.0.0.0&#x2F;6</span><br><span class="line">00000010	2.0.0.0&#x2F;7</span><br><span class="line">00000000	0.0.0.0&#x2F;7</span><br></pre></td></tr></table></figure>
+
 <p>我们只需对上述10条做VPN路由即可。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">route del -net 0.0.0.0/0</span><br><span class="line">route add -net 128.0.0.0/1 dev l2tp-vpn</span><br><span class="line">route add -net 64.0.0.0/2 dev l2tp-vpn</span><br><span class="line">route add -net 32.0.0.0/3 dev l2tp-vpn</span><br><span class="line">route add -net 16.0.0.0/4 dev l2tp-vpn</span><br><span class="line">route add -net 12.0.0.0/6 dev l2tp-vpn</span><br><span class="line">route add -net 11.0.0.0/8 dev l2tp-vpn</span><br><span class="line">route add -net 8.0.0.0/7 dev l2tp-vpn</span><br><span class="line">route add -net 4.0.0.0/6 dev l2tp-vpn</span><br><span class="line">route add -net 2.0.0.0/7 dev l2tp-vpn</span><br><span class="line">route add -net 0.0.0.0/7 dev l2tp-vpn</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">route del -net 0.0.0.0&#x2F;0</span><br><span class="line">route add -net 128.0.0.0&#x2F;1 dev l2tp-vpn</span><br><span class="line">route add -net 64.0.0.0&#x2F;2 dev l2tp-vpn</span><br><span class="line">route add -net 32.0.0.0&#x2F;3 dev l2tp-vpn</span><br><span class="line">route add -net 16.0.0.0&#x2F;4 dev l2tp-vpn</span><br><span class="line">route add -net 12.0.0.0&#x2F;6 dev l2tp-vpn</span><br><span class="line">route add -net 11.0.0.0&#x2F;8 dev l2tp-vpn</span><br><span class="line">route add -net 8.0.0.0&#x2F;7 dev l2tp-vpn</span><br><span class="line">route add -net 4.0.0.0&#x2F;6 dev l2tp-vpn</span><br><span class="line">route add -net 2.0.0.0&#x2F;7 dev l2tp-vpn</span><br><span class="line">route add -net 0.0.0.0&#x2F;7 dev l2tp-vpn</span><br></pre></td></tr></table></figure>
       
 
       
@@ -237,6 +241,20 @@
 </article>
 
   
+<nav id="article-nav">
+  
+    <a href="/2019/11/19/%E8%BF%9C%E7%A8%8B%E6%90%AD%E5%BB%BA%E5%8F%8D%E5%90%91%E7%A9%BF%E9%80%8FRVPN/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          远程搭建反向穿透RVPN
+        
+      </div>
+    </a>
+  
+  
+</nav>
+
 
 <aside class="wrap-side-operation">
     <div class="mod-side-operation">
@@ -274,7 +292,7 @@
   <div class="outer">
     <div id="footer-info">
     	<div class="footer-left">
-    		&copy; 2019 KB5000
+    		&copy; 2020 KB5000
     	</div>
       	<div class="footer-right">
       		<a href="http://hexo.io/" target="_blank">Hexo</a>  Theme <a href="https://github.com/litten/hexo-theme-yilia" target="_blank">Yilia</a> by Litten

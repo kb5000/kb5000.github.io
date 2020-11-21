@@ -6,13 +6,17 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://yoursite.com">
-  <title>KB5000</title>
+  <title>Openwrt连接L2TP环境网络配置详解 | KB5000</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="KB5000">
-<meta property="og:url" content="http://yoursite.com/index.html">
+  <meta name="description" content="最近入手了一台刷入OpenWrt的路由器，但校园网需要使用静态地址+L2TP接入，因此配置的过程出现了很多问题，特此记录。 下载L2TP软件包这个步骤是为了给所有没有预装xl2tpd的（大部分应该没有）路由器安装xl2tpd，它与其他部分不是连续的关系，所以首先要进行这一步。 要配置L2TP首先需要让路由器拥有xl2tpd这个软件包。如果没有也不要紧，我们可以让电脑给路由器共享网络。这个过程需要1">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Openwrt连接L2TP环境网络配置详解">
+<meta property="og:url" content="http://yoursite.com/2020/11/21/Openwrt%E8%BF%9E%E6%8E%A5L2TP%E7%8E%AF%E5%A2%83%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE%E8%AF%A6%E8%A7%A3/index.html">
 <meta property="og:site_name" content="KB5000">
+<meta property="og:description" content="最近入手了一台刷入OpenWrt的路由器，但校园网需要使用静态地址+L2TP接入，因此配置的过程出现了很多问题，特此记录。 下载L2TP软件包这个步骤是为了给所有没有预装xl2tpd的（大部分应该没有）路由器安装xl2tpd，它与其他部分不是连续的关系，所以首先要进行这一步。 要配置L2TP首先需要让路由器拥有xl2tpd这个软件包。如果没有也不要紧，我们可以让电脑给路由器共享网络。这个过程需要1">
 <meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-11-21T02:09:06.273Z">
+<meta property="article:modified_time" content="2020-11-21T03:30:13.085Z">
 <meta property="article:author" content="KB5000">
 <meta name="twitter:card" content="summary">
   
@@ -124,16 +128,14 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-    <article id="post-Openwrt连接L2TP环境网络配置详解" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+            <article id="post-Openwrt连接L2TP环境网络配置详解" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/11/21/Openwrt%E8%BF%9E%E6%8E%A5L2TP%E7%8E%AF%E5%A2%83%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE%E8%AF%A6%E8%A7%A3/">Openwrt连接L2TP环境网络配置详解</a>
+    <h1 class="article-title" itemprop="name">
+      Openwrt连接L2TP环境网络配置详解
     </h1>
   
 
@@ -212,16 +214,75 @@
       
 
       
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/11/21/Openwrt%E8%BF%9E%E6%8E%A5L2TP%E7%8E%AF%E5%A2%83%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE%E8%AF%A6%E8%A7%A3/">展开全文 >></a>
-        </p>
-      
 
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
+        </div>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=http://yoursite.com/2020/11/21/Openwrt%E8%BF%9E%E6%8E%A5L2TP%E7%8E%AF%E5%A2%83%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE%E8%AF%A6%E8%A7%A3/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
       
       <div class="clearfix"></div>
     </div>
   </div>
 </article>
+
+  
+<nav id="article-nav">
+  
+  
+    <a href="/2019/11/19/%E8%BF%9C%E7%A8%8B%E6%90%AD%E5%BB%BA%E5%8F%8D%E5%90%91%E7%A9%BF%E9%80%8FRVPN/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">远程搭建反向穿透RVPN</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
 
 <aside class="wrap-side-operation">
     <div class="mod-side-operation">
@@ -241,159 +302,14 @@
 
 
 
-
   
-    <article id="post-远程搭建反向穿透RVPN" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/11/19/%E8%BF%9C%E7%A8%8B%E6%90%AD%E5%BB%BA%E5%8F%8D%E5%90%91%E7%A9%BF%E9%80%8FRVPN/">远程搭建反向穿透RVPN</a>
-    </h1>
   
 
-        
-        <a href="/2019/11/19/%E8%BF%9C%E7%A8%8B%E6%90%AD%E5%BB%BA%E5%8F%8D%E5%90%91%E7%A9%BF%E9%80%8FRVPN/" class="archive-article-date">
-  	<time datetime="2019-11-19T15:46:27.067Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-11-19</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>为了在非内网环境下访问校网，同时规避掉原来速度慢且极为臃肿的RVPN，这里搭建了一个基于SSH的RVPN，当然了，性能可能较差，只能供个人使用。</p>
-<p>核心命令：利用SSH的DNAT功能，在客户端建立一个SOCKS5代理，从而使网络流量走SSH隧道。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh -NfD 1088 pi@rte.un</span><br></pre></td></tr></table></figure>
-
-<p>这里，N代表不打开shell，我们只进行网络代理，不需要shell；f代表让ssh自动到后台运行；而D则是建立一个动态端口转发隧道，也就是打开了SOCKS5隧道，这里将隧道建立在了1088端口。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2019/11/19/%E8%BF%9C%E7%A8%8B%E6%90%AD%E5%BB%BA%E5%8F%8D%E5%90%91%E7%A9%BF%E9%80%8FRVPN/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-利用路由表实现校园内网不经过VPN" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/10/21/%E5%88%A9%E7%94%A8%E8%B7%AF%E7%94%B1%E8%A1%A8%E5%AE%9E%E7%8E%B0%E6%A0%A1%E5%9B%AD%E5%86%85%E7%BD%91%E4%B8%8D%E7%BB%8F%E8%BF%87VPN/">利用路由表实现校园内网不经过VPN</a>
-    </h1>
   
 
-        
-        <a href="/2019/10/21/%E5%88%A9%E7%94%A8%E8%B7%AF%E7%94%B1%E8%A1%A8%E5%AE%9E%E7%8E%B0%E6%A0%A1%E5%9B%AD%E5%86%85%E7%BD%91%E4%B8%8D%E7%BB%8F%E8%BF%87VPN/" class="archive-article-date">
-  	<time datetime="2019-10-21T15:15:52.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-10-21</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>最近在宿舍添置了一台路由器。。结果现在的问题就是访问校内网络时候不能享受到20MB/s的内网速度了。所以找了一下，用路由表编辑是可行的。</p>
-<p>首先我们进入路由器的后台（openwrt环境，包含busybox），利用<code>route</code>命令查看一下原有的路由表</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Kernel IP routing table</span><br><span class="line">Destination     Gateway         Genmask         Flags Metric Ref    Use Iface</span><br><span class="line">default         *               0.0.0.0         U     0      0        0 l2tp-vpn</span><br><span class="line">10.0.2.73       10.171.32.1     255.255.255.255 UGH   0      0        0 eth2.2</span><br><span class="line">10.0.2.73       *               255.255.255.255 UH    0      0        0 l2tp-vpn</span><br><span class="line">10.171.32.0     *               255.255.240.0   U     0      0        0 eth2.2</span><br><span class="line">192.168.199.0   *               255.255.255.0   U     0      0        0 br-lan</span><br><span class="line">192.168.200.0   *               255.255.255.0   U     0      0        0 br-lan1</span><br></pre></td></tr></table></figure>
-
-<p>可以看到现在所有的外网和内网IP都是走VPN的。最简单的方案就是按照下列添加路由表：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">route add -net 10.0.0.0&#x2F;8 gw 10.171.32.1 dev eth2.2</span><br></pre></td></tr></table></figure>
-
-<p>但是，在重新连接之后网关IP会改变，我们可以使用另一种方式，也就是黑名单的实现方式。<br>我们知道，对于IP<code>10.0.0.0/8</code>，其第一个字节对应的二进制位为<code>00001010</code>，我们可以求反向的IP及其掩码。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">10000000	128.0.0.0&#x2F;1</span><br><span class="line">01000000	64.0.0.0&#x2F;2</span><br><span class="line">00100000	32.0.0.0&#x2F;3</span><br><span class="line">00010000	16.0.0.0&#x2F;4</span><br><span class="line">00001100	12.0.0.0&#x2F;6</span><br><span class="line">00001011	11.0.0.0&#x2F;8</span><br><span class="line">00001000	8.0.0.0&#x2F;7</span><br><span class="line">00000100	4.0.0.0&#x2F;6</span><br><span class="line">00000010	2.0.0.0&#x2F;7</span><br><span class="line">00000000	0.0.0.0&#x2F;7</span><br></pre></td></tr></table></figure>
-
-<p>我们只需对上述10条做VPN路由即可。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">route del -net 0.0.0.0&#x2F;0</span><br><span class="line">route add -net 128.0.0.0&#x2F;1 dev l2tp-vpn</span><br><span class="line">route add -net 64.0.0.0&#x2F;2 dev l2tp-vpn</span><br><span class="line">route add -net 32.0.0.0&#x2F;3 dev l2tp-vpn</span><br><span class="line">route add -net 16.0.0.0&#x2F;4 dev l2tp-vpn</span><br><span class="line">route add -net 12.0.0.0&#x2F;6 dev l2tp-vpn</span><br><span class="line">route add -net 11.0.0.0&#x2F;8 dev l2tp-vpn</span><br><span class="line">route add -net 8.0.0.0&#x2F;7 dev l2tp-vpn</span><br><span class="line">route add -net 4.0.0.0&#x2F;6 dev l2tp-vpn</span><br><span class="line">route add -net 2.0.0.0&#x2F;7 dev l2tp-vpn</span><br><span class="line">route add -net 0.0.0.0&#x2F;7 dev l2tp-vpn</span><br></pre></td></tr></table></figure>
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">树莓派</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2019/10/21/%E5%88%A9%E7%94%A8%E8%B7%AF%E7%94%B1%E8%A1%A8%E5%AE%9E%E7%8E%B0%E6%A0%A1%E5%9B%AD%E5%86%85%E7%BD%91%E4%B8%8D%E7%BB%8F%E8%BF%87VPN/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
   
+
   
 
 
@@ -416,8 +332,8 @@
     <script>
 	var yiliaConfig = {
 		mathjax: true,
-		isHome: true,
-		isPost: false,
+		isHome: false,
+		isPost: true,
 		isArchive: false,
 		isTag: false,
 		isCategory: false,
