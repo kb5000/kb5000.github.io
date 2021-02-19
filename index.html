@@ -126,6 +126,130 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-串口上网实验" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2021/02/09/%E4%B8%B2%E5%8F%A3%E4%B8%8A%E7%BD%91%E5%AE%9E%E9%AA%8C/">串口上网实验</a>
+    </h1>
+  
+
+        
+        <a href="/2021/02/09/%E4%B8%B2%E5%8F%A3%E4%B8%8A%E7%BD%91%E5%AE%9E%E9%AA%8C/" class="archive-article-date">
+  	<time datetime="2021-02-09T14:59:58.415Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2021-02-09</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>最近搞了一台带有RS232串口的Linux服务器，想通过串口和树莓派连接起来传输数据。而串口上网正好也是一种古老的上网方式，在当下虽略显过时但仍有一定的可玩性。</p>
+<h3 id="连接服务器和树莓派"><a href="#连接服务器和树莓派" class="headerlink" title="连接服务器和树莓派"></a>连接服务器和树莓派</h3><p>由于RS232串口和树莓派的GPIO串口采用的电平是不同的制式，为了能让两种串口相互通信，我们可以买一块MX3232的电平转换模块，但这里由于买到的模块被我乱搞烧坏了，所以还是用服务器的USB接口配合USB转串口线进行通信。</p>
+<p><img src="../images/1613708747029.png" alt=""></p>
+<p>这张图画的有问题。。5V一般不用连</p>
+<h3 id="让树莓派Serial0采用硬件时钟"><a href="#让树莓派Serial0采用硬件时钟" class="headerlink" title="让树莓派Serial0采用硬件时钟"></a>让树莓派Serial0采用硬件时钟</h3><p>默认情况下，树莓派的GPIO串口采用的是软件时钟，误差较大。而树莓派默认的蓝牙串口时钟是硬件时钟。我们可以将树莓派的两个串口使用的时钟调换，让GPIO串口采用硬件时钟，增加GPIO串口稳定性。</p>
+<p>修改树莓派启动配置文件 /boot/config.txt，在末尾添加一行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dtoverlay&#x3D;pi3-miniuart-bt</span><br></pre></td></tr></table></figure>
+
+<p>保存重启，执行下面的命令发现serial0已经变成了使用AMA0硬件时钟，说明交换成功了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">pi@raspberrypi:~ $ ls -l &#x2F;dev&#x2F;serial*</span><br><span class="line">lrwxrwxrwx 1 root root 7 2月  15 13:42 &#x2F;dev&#x2F;serial0 -&gt; ttyAMA0</span><br><span class="line">lrwxrwxrwx 1 root root 5 2月  15 13:42 &#x2F;dev&#x2F;serial1 -&gt; ttyS0</span><br></pre></td></tr></table></figure>
+
+<h3 id="串口测试"><a href="#串口测试" class="headerlink" title="串口测试"></a>串口测试</h3><p>在树莓派中执行命令<code>cat /dev/serial0</code>，同时在Linux设备中执行命令<code>echo hello &gt; /dev/ttyUSB0</code>，可以在树莓派中接收到<code>hello</code>的消息，说明串口连接成功了。</p>
+<p>注意，采用echo/cat命令进行串口消息传输时，默认采用的波特率和停止位等其它设置可以通过stty命令进行查看和设置，而默认情况下二者使用的都是通用的9600波特率，8数据位，1停止位，无校验位等的设置，因此可以直接进行通讯。如果测试失败，可以查看是否是由于两端设置不同等原因造成的。</p>
+<h3 id="封装网络协议"><a href="#封装网络协议" class="headerlink" title="封装网络协议"></a>封装网络协议</h3><p>为了在串口上面承载网络数据，我们可以使用PPP协议。PPP协议是一种简单的数据链路层协议，可以在两端建立起点对点的数据链路层连接。这里我们采用pppd命令在二者间建立PPP信道</p>
+<p>我们首先在两台设备上安装ppp软件包：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install ppp</span><br></pre></td></tr></table></figure>
+
+<p>然后两端分别输入如下命令</p>
+<p><strong>服务器端</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo pppd -detach /dev/ttyUSB0 115200 192.168.5.1:192.168.5.2 noauth nocrtscts <span class="built_in">local</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>树莓派端</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo pppd -detach /dev/serial0 115200 noauth nocrtscts <span class="built_in">local</span></span><br></pre></td></tr></table></figure>
+
+<p>这里，<code>detach</code>代表将pppd挂在前台方便查看状态和停止运行；<br><code>/dev/serial0</code>等代表使用的串口设备；<br><code>115200</code>是波特率，115200还是非常保守的，经过实验最大可以承载921600的速率，也就是基本波特率9600的92倍；<br><code>192.168.5.1:192.168.5.2</code>是两端使用的IP，这里只在一台机器上指定了，另一台机器上面可以协商获取。如果两端都写也没问题的，只要保证对面是<code>192.168.5.2:192.168.5.1</code>这样就可以了；<br><code>noauth</code>关闭PPP的验证功能；<br><code>nocrtscts</code>和<code>local</code>关闭硬件流控</p>
+<p>现在再打开两个终端，应该已经可以ping通对方了</p>
+<h3 id="速度测试"><a href="#速度测试" class="headerlink" title="速度测试"></a>速度测试</h3><p>由于ppp默认采用了deflate压缩算法，因此测出的速率会有一定的偏差。为了得到真实速率，我们需要修改刚刚的指令，在服务器端增加<code>nodeflate nobsdcomp</code>两个参数关掉压缩功能。</p>
+<p>接下来可以用iperf软件进行测试。如果没有安装首先要<code>sudo apt install iperf</code>进行安装。</p>
+<p>在一台机器上运行<code>iperf -s</code>作为服务端，另一台运行<code>iperf -c 192.168.5.XXX</code>连接另一台机器，得到结果如下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">pi@raspberrypi:~ $ iperf -c 192.168.5.1</span><br><span class="line"></span><br><span class="line">Client connecting to 192.168.5.1, TCP port 5001</span><br><span class="line">TCP window size: 43.8 KByte (default)</span><br><span class="line"></span><br><span class="line">[  3] <span class="built_in">local</span> 192.168.5.2 port 48186 connected with 192.168.5.1 port 5001</span><br><span class="line">[ ID] Interval       Transfer     Bandwidth</span><br><span class="line">[  3]  0.0-10.8 sec  1.00 MBytes   775 Kbits/sec</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，最终可以达到775Kbps的速率，还是不快的，不过还是基本达到3G时代的速度了。</p>
+<h3 id="路由设置"><a href="#路由设置" class="headerlink" title="路由设置"></a>路由设置</h3><p>接下来我们要设置树莓派能够通过串口进行所有的网络活动，也就是准备拔掉它的网线。首先要做的就是设置一下两边的路由表。</p>
+<p>在此之前，我们首先要重新运行刚刚的pppd命令，这次在树莓派端取消掉-detach，让它保持在后台运行；同时在服务器端开启压缩功能，保证更快的速率，最后别忘了两端采用921600的波特率。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo pppd -detach /dev/ttyUSB0 921600 192.168.5.1:192.168.5.2 noauth nocrtscts <span class="built_in">local</span></span><br><span class="line">sudo pppd /dev/serial0 921600 noauth nocrtscts <span class="built_in">local</span></span><br></pre></td></tr></table></figure>
+
+<p>示例的网络环境：这是一个路由器下的环境，两台机器分别是192.168.2.3（树莓派）和192.168.2.6（服务器）。而这里的192.168.5.0/24则是通过PPP建立的网络。</p>
+<p>我们的目标是在192.168.2.3失效的情况下能够通过192.168.5.2作为树莓派的网络连接IP地址。在不使用NAT的情况下，我们不仅要配置树莓派和服务器的路由，还要配置网关路由器的路由。当然，另一种方式是使用NAT，将树莓派的串口地址作为服务器的一个内网地址，然后分别设置服务器的Source NAT用于树莓派的内部上网，设置Destination NAT，也就是端口转发用于连接树莓派的SSH。两种方式都是可以的，这里仅展示第一种也就是路由方式。</p>
+<p>在配置路由时，如果顺序不正确，可能导致无法访问树莓派。不过不要担心，将其他的步骤都做完应该是可以访问的。</p>
+<p><strong>网关路由器端</strong>：</p>
+<p>在网关路由器我们要加一条路由指令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">route add -net 192.168.5.0/24 gw 192.168.2.6</span><br></pre></td></tr></table></figure>
+
+<p>这条的目的是任何访问192.168.5.0/24的数据包都要通过我们的服务器进行转发。</p>
+<p><strong>服务器端</strong>：</p>
+<p>我们需要做的是允许将这台服务器当作路由器，和192.168.5.0之间转发数据。因此需要以下两条指令来配置防火墙：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo iptables -A FORWARD -d 192.168.5.0/24 -j ACCEPT</span><br><span class="line">sudo iptables -A FORWARD -s 192.168.5.0/24 -j ACCEPT</span><br></pre></td></tr></table></figure>
+
+<p>两条命令的含义是对于所有发到这台服务器但接收者的IP不是自己的（也就是“转发”包），如果它们的目的地址或者源地址有一个在192.168.5.0/24的范围内，那么就允许转发。</p>
+<p><strong>树莓派端</strong>：</p>
+<p>树莓派端要做的就是添加一条默认路由信息。也就是所有的网络流量都经过串口线传输。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo route add -net default gw 192.168.5.1</span><br></pre></td></tr></table></figure>
+
+<p>好了，经过这样的设置之后，我们就可以断开树莓派的网络了。我们可以用</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo ifconfig eth0 down</span><br></pre></td></tr></table></figure>
+
+<p>来关闭掉树莓派的有线网卡。当然，如果你用的是Wi-Fi，你也可以关闭掉wlan0达到同样的效果。此时你的SSH连接应该会断开。重新连接192.168.5.2这个IP，应该是能够成功连接了。</p>
+<p>为了检验我们的压缩性能，可以打开sftp，试一下串口线传输大文件的能力。嗯，800K的图片传了10多秒钟，相比蓝牙的速度还是差很多的嘛，未来可能玩玩其它协议看看速度会不会快一点？</p>
+<h3 id="抓包分析"><a href="#抓包分析" class="headerlink" title="抓包分析"></a>抓包分析</h3><p>下面要做的就是在服务器上用WireShark进行抓包了。由于pppd不会提供PPP的原始包头，因此WireShark抓不到数据链路层的包，相反，可以抓到的是一个名为“Linux cooked capture”的虚拟协议。</p>
+<p><img src="../images/1613716515143.png" alt=""></p>
+<p>不过可以发现的是，当ping包的数据部大小为1472时，达到最大的MTU，传输的伪包大小为1516，在ping大小为1474时，就已经发生了IP分片行为。因此根据ICMP+IP报文占用28字节，最终三层数据包最大大小是1500，而传输的伪包大小16字节。可以认为MTU保持在1500字节。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>串口上网实际上不局限于串口上网，更重要的是如何在一条原始的数据链路上建立高级的数据链接，在简单的信道上做复杂的工作。因此接下来还有很多衍生工作可玩（挖坑开始），比如在SPI或者IIC这样的接口协议上面实现ppp信道的连接，甚至是在TCP连接或TLS连接上承载PPP信道（土制VPN），都是比较好玩的方向。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2021/02/09/%E4%B8%B2%E5%8F%A3%E4%B8%8A%E7%BD%91%E5%AE%9E%E9%AA%8C/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-OpenWrt连接校园网L2TP环境网络配置详解" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
