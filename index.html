@@ -126,19 +126,19 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-”土制VPN“：基于TLS流的PPP封装" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-“土制VPN”：基于TLS流的PPP封装" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2021/02/19/%E2%80%9D%E5%9C%9F%E5%88%B6VPN%E2%80%9C%EF%BC%9A%E5%9F%BA%E4%BA%8ETLS%E6%B5%81%E7%9A%84PPP%E5%B0%81%E8%A3%85/">”土制VPN“：基于TLS流的PPP封装</a>
+      <a class="article-title" href="/2021/02/19/%E2%80%9C%E5%9C%9F%E5%88%B6VPN%E2%80%9D%EF%BC%9A%E5%9F%BA%E4%BA%8ETLS%E6%B5%81%E7%9A%84PPP%E5%B0%81%E8%A3%85/">“土制VPN”：基于TLS流的PPP封装</a>
     </h1>
   
 
         
-        <a href="/2021/02/19/%E2%80%9D%E5%9C%9F%E5%88%B6VPN%E2%80%9C%EF%BC%9A%E5%9F%BA%E4%BA%8ETLS%E6%B5%81%E7%9A%84PPP%E5%B0%81%E8%A3%85/" class="archive-article-date">
+        <a href="/2021/02/19/%E2%80%9C%E5%9C%9F%E5%88%B6VPN%E2%80%9D%EF%BC%9A%E5%9F%BA%E4%BA%8ETLS%E6%B5%81%E7%9A%84PPP%E5%B0%81%E8%A3%85/" class="archive-article-date">
   	<time datetime="2021-02-19T07:23:47.370Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2021-02-19</time>
 </a>
         
@@ -180,8 +180,28 @@
 <p><strong>树莓派：</strong> <code>sudo pppd -detach /dev/pts/6 noauth nocrtscts local</code></p>
 <p>现在就应该可以互相ping通对方了，至此我们已经成功建立了TLS流上的PPP封装。</p>
 <h3 id="速度测试"><a href="#速度测试" class="headerlink" title="速度测试"></a>速度测试</h3><p>同样地，我们在pppd中更改服务器的选项，用<code>nodeflate nobsdcomp</code>命令关掉压缩，以便进行更准确的速度测试，得到了40Mbps/68Mbps的速度。相比TCP流又下降了不少，大概是TLS本身传输加密数据本身数据量较大导致的。</p>
-<p>除了基于TCP的TLS流外，还有基于UDP的DTLS流，但是由于Socat直到一个月前才放出支持DTLS的新版本，我这台机器上还没有安装，因此智能等待后续更新了。</p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>这篇文章是 <a href="https://kb5000.github.io/2021/02/09/%E4%B8%B2%E5%8F%A3%E4%B8%8A%E7%BD%91%E5%AE%9E%E9%AA%8C/" target="_blank" rel="noopener">串口上网实验</a> 的一个衍生探究，更多集中在如何在一个已经建立好的信道上进行更加低级的数据传输。正如标题所说，整个过程建立了一个“VPN”，可以利用目标电脑的网络环境来进行上网。当然，我们也可以继续深入下去其中的很多问题：为什么建立的信道上下行出现了严重的速度不对等现象？如何提高信道的利用率达到更高的速度？不使用ppp封包，在Windows下如何实现这样的功能（Windows下的wsl不支持ppp功能）？还有很多细节等待进一步的探索和学习。</p>
+<p>除了基于TCP的TLS流外，还有基于UDP的DTLS流，但是由于Socat直到一个月前才放出支持DTLS的新版本，我这台机器上还没有安装，因此只能等待后续更新了。</p>
+<h3 id="实现NAT"><a href="#实现NAT" class="headerlink" title="实现NAT"></a>实现NAT</h3><p>既然我们要建立一个VPN，那么必不可少的就是能让树莓派使用服务器的网络进行上网。这意味着我们不能再像上一篇文章那样通过修改网关路由表这样大动干戈的方式来实现树莓派的网络访问了。当然，除了NAT以外，还可以通过ARP Proxy的方式实现类似的效果，但ARP Proxy需要有一个空余IP，仍然和网关有关系，因此这里仍然采用NAT的办法。</p>
+<p>我们做两个NAT：一个是Source NAT，用于树莓派访问外部网络时的映射；另一个是Destination NAT，用于外部网络访问树莓派的SSH，也就是端口转发。因此下面的操作都是在服务器上进行的。</p>
+<p>首先我们允许正常的路由转发：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo iptables -A FORWARD -d 192.168.5.0/24 -j ACCEPT</span><br><span class="line">sudo iptables -A FORWARD -s 192.168.5.0/24 -j ACCEPT</span><br></pre></td></tr></table></figure>
+
+<p>接下来实现SNAT，注意更换网卡的名称eth0为你自己的</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo iptables -t nat -A POSTROUTING -s 192.168.5.0/24 -o eth0 -j MASQUERADE</span><br></pre></td></tr></table></figure>
+
+<p>最后实现DNAT，就可以用其他的电脑访问树莓派了，这里是将192.168.2.6:15001转发到了192.168.5.2:22</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo iptables -t nat -A PREROUTING -p tcp -d 192.168.2.6 --dport 15001 -j DNAT --to-destination 192.</span><br><span class="line">168.5.2:22</span><br></pre></td></tr></table></figure>
+
+<p>当然，经过了这样的操作树莓派还是没有能够利用这条线路上网。我们还需要重新配置以下默认路由。以下在树莓派上面操作：</p>
+<p>首先把服务器的IP设置为通过原有的网卡：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo route add 192.168.2.6 gw 192.168.2.1 dev eth0</span><br></pre></td></tr></table></figure>
+
+<p>接下来设置默认的路由</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo route add -net default gw 192.168.5.1 dev ppp0</span><br></pre></td></tr></table></figure>
+
+<p>现在我们用<code>sudo traceroute -I www.baidu.com</code>测试，可以看到路由首先经过了192.168.5.1，表明数据是经过这个安全的隧道传输的。同样地，在其他的电脑上通过访问服务器的IP也可以转发到树莓派的SSH上，实现了安全隧道传输的VPN效果。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>可以说，我们这个土制VPN还是非常粗糙的，可用性较差但不失正确性。通过该VPN我们可以隐藏自己真实要访问的网站，所有的流量都通过虚拟的隧道进行转发，同时，隧道本身也采用了安全的TLS。代理ARP的功能虽然没有实现，但是NAT也达到了更好的效果。实际上，真正的VPN还应该拥有动态IP池等等功能，但那是不断演进的结果了。</p>
+<p>这篇文章是 <a href="https://kb5000.github.io/2021/02/09/%E4%B8%B2%E5%8F%A3%E4%B8%8A%E7%BD%91%E5%AE%9E%E9%AA%8C/" target="_blank" rel="noopener">串口上网实验</a> 的一个衍生探究，更多集中在如何在一个已经建立好的信道上进行更加低级的数据传输。正如标题所说，整个过程建立了一个“VPN”，可以利用目标电脑的网络环境来进行上网。当然，我们也可以继续深入下去其中的很多问题：为什么建立的信道上下行出现了严重的速度不对等现象？如何提高信道的利用率达到更高的速度？不使用ppp封包，在Windows下如何实现这样的功能（Windows下的wsl不支持ppp功能）？还有很多细节等待进一步的探索和学习。</p>
 
       
 
@@ -194,7 +214,7 @@
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2021/02/19/%E2%80%9D%E5%9C%9F%E5%88%B6VPN%E2%80%9C%EF%BC%9A%E5%9F%BA%E4%BA%8ETLS%E6%B5%81%E7%9A%84PPP%E5%B0%81%E8%A3%85/">展开全文 >></a>
+          <a class="article-more-a" href="/2021/02/19/%E2%80%9C%E5%9C%9F%E5%88%B6VPN%E2%80%9D%EF%BC%9A%E5%9F%BA%E4%BA%8ETLS%E6%B5%81%E7%9A%84PPP%E5%B0%81%E8%A3%85/">展开全文 >></a>
         </p>
       
 
@@ -268,7 +288,7 @@
 <p><strong>树莓派端</strong>：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo pppd -detach /dev/serial0 115200 noauth nocrtscts <span class="built_in">local</span></span><br></pre></td></tr></table></figure>
 
-<p>这里，<code>detach</code>代表将pppd挂在前台方便查看状态和停止运行；<br><code>/dev/serial0</code>等代表使用的串口设备；<br><code>115200</code>是波特率，115200还是非常保守的，经过实验最大可以承载921600的速率，也就是基本波特率9600的92倍；<br><code>192.168.5.1:192.168.5.2</code>是两端使用的IP，这里只在一台机器上指定了，另一台机器上面可以协商获取。如果两端都写也没问题的，只要保证对面是<code>192.168.5.2:192.168.5.1</code>这样就可以了；<br><code>noauth</code>关闭PPP的验证功能；<br><code>nocrtscts</code>和<code>local</code>关闭硬件流控</p>
+<p>这里，<code>detach</code>代表将pppd挂在前台方便查看状态和停止运行；<br><code>/dev/serial0</code>等代表使用的串口设备；<br><code>115200</code>是波特率，115200还是非常保守的，经过实验最大可以承载921600的速率，也就是基本波特率9600的96倍；<br><code>192.168.5.1:192.168.5.2</code>是两端使用的IP，这里只在一台机器上指定了，另一台机器上面可以协商获取。如果两端都写也没问题的，只要保证对面是<code>192.168.5.2:192.168.5.1</code>这样就可以了；<br><code>noauth</code>关闭PPP的验证功能；<br><code>nocrtscts</code>和<code>local</code>关闭硬件流控</p>
 <p>现在再打开两个终端，应该已经可以ping通对方了</p>
 <h3 id="速度测试"><a href="#速度测试" class="headerlink" title="速度测试"></a>速度测试</h3><p>由于ppp默认采用了deflate压缩算法，因此测出的速率会有一定的偏差。为了得到真实速率，我们需要修改刚刚的指令，在服务器端增加<code>nodeflate nobsdcomp</code>两个参数关掉压缩功能。</p>
 <p>接下来可以用iperf软件进行测试。如果没有安装首先要<code>sudo apt install iperf</code>进行安装。</p>
