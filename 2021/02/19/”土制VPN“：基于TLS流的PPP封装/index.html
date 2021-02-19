@@ -6,13 +6,17 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://yoursite.com">
-  <title>Archives: 2021/2 | KB5000</title>
+  <title>”土制VPN“：基于TLS流的PPP封装 | KB5000</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="KB5000">
-<meta property="og:url" content="http://yoursite.com/archives/2021/02/index.html">
+  <meta name="description" content="这次呢我们接着上一次 串口上网实验 的文章来继续深入。上一篇我们提到PPP封装可以做的工作远不止有在串口上建立数据链路这么简单，更重要的是可以在任何能够传输数据的信道上再建立一层数据链路的底层封装。因此这次我们希望在TLS安全层上建立一个信道，并在上面建立一个PPP连接，实现类似VPN的功能。由于俺学艺不精，因此要分很多前置工作慢慢迭代，希望一步步的迭代能逐步做到最后想要的成果。 基于TCP流的P">
+<meta property="og:type" content="article">
+<meta property="og:title" content="”土制VPN“：基于TLS流的PPP封装">
+<meta property="og:url" content="http://yoursite.com/2021/02/19/%E2%80%9D%E5%9C%9F%E5%88%B6VPN%E2%80%9C%EF%BC%9A%E5%9F%BA%E4%BA%8ETLS%E6%B5%81%E7%9A%84PPP%E5%B0%81%E8%A3%85/index.html">
 <meta property="og:site_name" content="KB5000">
+<meta property="og:description" content="这次呢我们接着上一次 串口上网实验 的文章来继续深入。上一篇我们提到PPP封装可以做的工作远不止有在串口上建立数据链路这么简单，更重要的是可以在任何能够传输数据的信道上再建立一层数据链路的底层封装。因此这次我们希望在TLS安全层上建立一个信道，并在上面建立一个PPP连接，实现类似VPN的功能。由于俺学艺不精，因此要分很多前置工作慢慢迭代，希望一步步的迭代能逐步做到最后想要的成果。 基于TCP流的P">
 <meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-02-19T07:23:47.370Z">
+<meta property="article:modified_time" content="2021-02-19T10:30:29.800Z">
 <meta property="article:author" content="KB5000">
 <meta name="twitter:card" content="summary">
   
@@ -124,76 +128,170 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
+            <article id="post-”土制VPN“：基于TLS流的PPP封装" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
   
+    <h1 class="article-title" itemprop="name">
+      ”土制VPN“：基于TLS流的PPP封装
+    </h1>
   
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2021" class="archive-year">2021</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2021/02/19/%E2%80%9D%E5%9C%9F%E5%88%B6VPN%E2%80%9C%EF%BC%9A%E5%9F%BA%E4%BA%8ETLS%E6%B5%81%E7%9A%84PPP%E5%B0%81%E8%A3%85/" class="archive-article-date">
+
+        
+        <a href="/2021/02/19/%E2%80%9D%E5%9C%9F%E5%88%B6VPN%E2%80%9C%EF%BC%9A%E5%9F%BA%E4%BA%8ETLS%E6%B5%81%E7%9A%84PPP%E5%B0%81%E8%A3%85/" class="archive-article-date">
   	<time datetime="2021-02-19T07:23:47.370Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2021-02-19</time>
 </a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2021/02/19/%E2%80%9D%E5%9C%9F%E5%88%B6VPN%E2%80%9C%EF%BC%9A%E5%9F%BA%E4%BA%8ETLS%E6%B5%81%E7%9A%84PPP%E5%B0%81%E8%A3%85/">”土制VPN“：基于TLS流的PPP封装</a>
-    </h1>
-  
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>这次呢我们接着上一次 <a href="https://kb5000.github.io/2021/02/09/%E4%B8%B2%E5%8F%A3%E4%B8%8A%E7%BD%91%E5%AE%9E%E9%AA%8C/" target="_blank" rel="noopener">串口上网实验</a> 的文章来继续深入。上一篇我们提到PPP封装可以做的工作远不止有在串口上建立数据链路这么简单，更重要的是可以在任何能够传输数据的信道上再建立一层数据链路的底层封装。因此这次我们希望在TLS安全层上建立一个信道，并在上面建立一个PPP连接，实现类似VPN的功能。由于俺学艺不精，因此要分很多前置工作慢慢迭代，希望一步步的迭代能逐步做到最后想要的成果。</p>
+<h3 id="基于TCP流的PPP封装"><a href="#基于TCP流的PPP封装" class="headerlink" title="基于TCP流的PPP封装"></a>基于TCP流的PPP封装</h3><p>首先我们要做的就是想在TCP流上实现一个基本的PPP封装。由于pppd是对串口、网卡这样的流设备进行操作的，而我们的TCP流在Linux中不能表示为一个能用echo或cat进行操作的文件，所以必须用一些间接的手段。</p>
+<p>题外话，在Linux中，Socket虽然也存在相应的文件，但对Socket的读写使用的不是文件接口而是专用的网络接口，因此二者不能混为一谈。另外，bash提供了一个方便的接口发送TCP消息：<code>echo xxx &gt; dev/tcp/{ip}/{port}</code>，这条命令会向tcp://ip:port发送一条xxx的消息，但这个只是bash的语法糖，并不是说Linux实际存在这样的设备。</p>
+<p>不过我们有一个强大的软件可以实现这样的功能：socat。它可以在不同的数据之间转换，包括将tcp数据传输到一个虚拟终端文件上。这样的功能恰好是我们需要的，我们可以用熟悉的接口来解决复杂的问题了。</p>
+<p>首先在两台机器上安装socat：<code>sudo apt install socat</code></p>
+<p><strong>服务器：</strong> <code>socat -d -d tcp-listen:15000 pty</code></p>
+<p><strong>树莓派：</strong> <code>socat -d -d tcp:192.168.2.6:15000 pty</code></p>
+<p>这里，<code>-d -d</code>是让socat输出详细的调试信息，这里的目的是显示出socat分配的虚拟IO设备名；<br><code>tcp-listen:15000</code>是在15000建立一个tcp的监听端口；<br><code>tcp:192.168.2.6:15000</code>就是使用TCP协议连接到这个地址；<br><code>pty</code>是请求一个虚拟的终端设备连接到左边的流上面。</p>
+<p>socat实际上就是将两个不同的流连接在一起。这里就是将网络接口的TCP和文件接口的PTY连接在一起。</p>
+<p>下面我们在两端建立PPP连接。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">~ &gt; socat -d -d tcp-listen:15000 pty</span><br><span class="line">2021/02/19 15:45:50 socat[574405] N listening on AF=2 0.0.0.0:15000</span><br><span class="line">2021/02/19 15:45:57 socat[574405] N accepting connection from AF=2 192.168.2.3:47036 on AF=2 192.168.2.6:15000</span><br><span class="line">2021/02/19 15:45:57 socat[574405] N PTY is /dev/pts/4</span><br><span class="line">2021/02/19 15:45:57 socat[574405] N starting data transfer loop with FDs [6,6] and [5,5]</span><br></pre></td></tr></table></figure>
 
-        <div class="article-info info-on-right">
-          
-          
+<p>可以看到为服务器分配的虚拟终端是/dev/pts/4，因此设备就是这个了。树莓派的类似，这里是/dev/pts/2</p>
+<p><strong>服务器：</strong> <code>sudo pppd -detach /dev/pts/4 192.168.5.1:192.168.5.2 noauth nocrtscts local</code></p>
+<p><strong>树莓派：</strong> <code>sudo pppd -detach /dev/pts/2 noauth nocrtscts local</code></p>
+<p>提前输入好命令，两端按下回车（因为pppd的超时默认很少，时间太长会断掉），可以看到两端已经拿到了IP，再打开终端相互ping，如果ping通证明链路已经完好了。</p>
+<p>稍微修改pppd命令，通过<code>nodeflate nobsdcomp</code>关掉压缩功能后进行测速，发现速度仅能达到50Mbps和100Mbps的非常不对称的速率。相比直连情况下树莓派的300Mbps网卡还是有很大差距的，但相比上一篇的串口速率已经是一个质的飞跃了。</p>
+<p>稍微修改socat命令，如果换成udp协议建立的原始信道，那么速度更是变成了只有56Mbps/85Mbps这样的速率，局域网环境下应该不存在针对UDP的限速行为，因此发生这样的情况还是较为令人费解的。可能是iperf本身的问题，但换成iperf3后并没有结果的改变。</p>
+<h3 id="TLS流的建立"><a href="#TLS流的建立" class="headerlink" title="TLS流的建立"></a>TLS流的建立</h3><p>TLS是一种基于证书体系的安全系统，其可以提供更安全更可靠的流式数据传输。我们仍然采用socat工具来帮助实现TLS流的建立。</p>
+<h5 id="生成自签名证书"><a href="#生成自签名证书" class="headerlink" title="生成自签名证书"></a>生成自签名证书</h5><p>我们需要的自签名证书涉及2个文件：保存密钥的key文件和保存加密过的证书信息的crt文件。然而，socat需要的并不单纯是这两个文件：它需要的是证书文件crt以及一个key和crt文件的打包文件。</p>
+<p><strong>密钥文件：</strong> <code>openssl ecparam -name prime256v1 -genkey -out ca.key</code>，其中，ecparam是指定密钥文件的算法。常用的算法有RSA和ECDSA。这里用的便是ECDSA算法的Prime256v1曲线。ECDSA算法的好处是生成key的速度更快，性能更好，占用的空间更小。</p>
+<p><strong>证书文件：</strong> <code>openssl req -new -key ca.key -x509 -days 3650 -out ca.crt</code>，这时，机器会要求你回答几个问题，大部分的问题都可以随意回答，但是Common Name这项必须是你用于访问这台服务器的IP地址或域名。因为如果服务器的IP或域名和证书中Common Name项的内容不同，那么客户端就会拒绝连接，保证安全性。</p>
+<p><strong>打包文件：</strong> <code>cat ca.key ca.crt &gt; ca.pem</code>，我们使用cat命令将ca.key和ca.crt两个文件简单地连接在一起即可。</p>
+<p>接下来我们要将生成的证书传输到另一台机器上面，保证两边的证书是完全相同的，才能连接成功。</p>
+<h5 id="建立TLS流"><a href="#建立TLS流" class="headerlink" title="建立TLS流"></a>建立TLS流</h5><p>下面我们就可以用socat命令来建立TLS流了，过程和建立TCP流类似。但首先我们还要切换到刚刚保存证书的那个目录下。</p>
+<p><strong>服务器：</strong> <code>socat -d -d openssl-listen:15000,cert=ca.pem,cafile=ca.crt pty</code></p>
+<p><strong>树莓派：</strong> <code>socat -d -d openssl:192.168.2.6:15000,cert=ca.pem,cafile=ca.crt pty</code></p>
+<p>现在，屏幕上应该已经显示了两台机器分配的PTY，这表明已经成功建立了TLS数据流。</p>
+<p>如果将服务器和树莓派的命令对调，也就是让服务器去连接树莓派的话，由于刚刚提到客户端会对连接的地址进行验证，因此反过来是会连接失败的，而且现象是客户端首先断开连接，服务端并没有显示错误信息。但如果我们生成证书时使用的是域名，那么只要这个域名可以指向那台机器，同时那台机器拥有证书文件，客户端就会认为这就是正确的服务器从而连接。</p>
+<h3 id="建立TLS流的PPP封装"><a href="#建立TLS流的PPP封装" class="headerlink" title="建立TLS流的PPP封装"></a>建立TLS流的PPP封装</h3><p>有了上面的基础，建立基于TLS流的PPP封装已经是呼之欲出了。保持刚刚建立的TLS流，输入以下命令：（更改为你的/dev/pts/x）</p>
+<p><strong>服务器：</strong> <code>sudo pppd -detach /dev/pts/8 192.168.5.1:192.168.5.2 noauth nocrtscts local</code></p>
+<p><strong>树莓派：</strong> <code>sudo pppd -detach /dev/pts/6 noauth nocrtscts local</code></p>
+<p>现在就应该可以互相ping通对方了，至此我们已经成功建立了TLS流上的PPP封装。</p>
+<h3 id="速度测试"><a href="#速度测试" class="headerlink" title="速度测试"></a>速度测试</h3><p>同样地，我们在pppd中更改服务器的选项，用<code>nodeflate nobsdcomp</code>命令关掉压缩，以便进行更准确的速度测试，得到了40Mbps/68Mbps的速度。相比TCP流又下降了不少，大概是TLS本身传输加密数据本身数据量较大导致的。</p>
+<p>除了基于TCP的TLS流外，还有基于UDP的DTLS流，但是由于Socat直到一个月前才放出支持DTLS的新版本，我这台机器上还没有安装，因此智能等待后续更新了。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>这篇文章是 <a href="https://kb5000.github.io/2021/02/09/%E4%B8%B2%E5%8F%A3%E4%B8%8A%E7%BD%91%E5%AE%9E%E9%AA%8C/" target="_blank" rel="noopener">串口上网实验</a> 的一个衍生探究，更多集中在如何在一个已经建立好的信道上进行更加低级的数据传输。正如标题所说，整个过程建立了一个“VPN”，可以利用目标电脑的网络环境来进行上网。当然，我们也可以继续深入下去其中的很多问题：为什么建立的信道上下行出现了严重的速度不对等现象？如何提高信道的利用率达到更高的速度？不使用ppp封包，在Windows下如何实现这样的功能（Windows下的wsl不支持ppp功能）？还有很多细节等待进一步的探索和学习。</p>
 
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=http://yoursite.com/2021/02/19/%E2%80%9D%E5%9C%9F%E5%88%B6VPN%E2%80%9C%EF%BC%9A%E5%9F%BA%E4%BA%8ETLS%E6%B5%81%E7%9A%84PPP%E5%B0%81%E8%A3%85/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2021/02/09/%E4%B8%B2%E5%8F%A3%E4%B8%8A%E7%BD%91%E5%AE%9E%E9%AA%8C/" class="archive-article-date">
-  	<time datetime="2021-02-09T14:59:58.415Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2021-02-09</time>
-</a>
+<nav id="article-nav">
+  
+  
+    <a href="/2021/02/09/%E4%B8%B2%E5%8F%A3%E4%B8%8A%E7%BD%91%E5%AE%9E%E9%AA%8C/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">串口上网实验</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
+        
+        
+    </div>
+</aside>
+
+
+
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2021/02/09/%E4%B8%B2%E5%8F%A3%E4%B8%8A%E7%BD%91%E5%AE%9E%E9%AA%8C/">串口上网实验</a>
-    </h1>
+  
   
 
-        <div class="article-info info-on-right">
-          
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
   
 
-    
+  
+
+  
 
 
           </div>
@@ -216,8 +314,8 @@
 	var yiliaConfig = {
 		mathjax: true,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,
