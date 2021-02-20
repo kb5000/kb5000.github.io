@@ -16,7 +16,7 @@
 <meta property="og:description" content="这次呢我们接着上一次 串口上网实验 的文章来继续深入。上一篇我们提到PPP封装可以做的工作远不止有在串口上建立数据链路这么简单，更重要的是可以在任何能够传输数据的信道上再建立一层数据链路的底层封装。因此这次我们希望在TLS安全层上建立一个信道，并在上面建立一个PPP连接，实现类似VPN的功能。由于俺学艺不精，因此要分很多前置工作慢慢迭代，希望一步步的迭代能逐步做到最后想要的成果。 基于TCP流的P">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2021-02-19T07:23:47.370Z">
-<meta property="article:modified_time" content="2021-02-20T05:59:40.571Z">
+<meta property="article:modified_time" content="2021-02-20T07:22:32.086Z">
 <meta property="article:author" content="KB5000">
 <meta name="twitter:card" content="summary">
   
@@ -148,7 +148,7 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>这次呢我们接着上一次 <a href="https://kb5000.github.io/2021/02/09/%E4%B8%B2%E5%8F%A3%E4%B8%8A%E7%BD%91%E5%AE%9E%E9%AA%8C/" target="_blank" rel="noopener">串口上网实验</a> 的文章来继续深入。上一篇我们提到PPP封装可以做的工作远不止有在串口上建立数据链路这么简单，更重要的是可以在任何能够传输数据的信道上再建立一层数据链路的底层封装。因此这次我们希望在TLS安全层上建立一个信道，并在上面建立一个PPP连接，实现类似VPN的功能。由于俺学艺不精，因此要分很多前置工作慢慢迭代，希望一步步的迭代能逐步做到最后想要的成果。</p>
+        <p>这次呢我们接着上一次 <a href="https://kb5000.github.io/2021/02/09/%E4%B8%B2%E5%8F%A3%E4%B8%8A%E7%BD%91%E5%AE%9E%E9%AA%8C/">串口上网实验</a> 的文章来继续深入。上一篇我们提到PPP封装可以做的工作远不止有在串口上建立数据链路这么简单，更重要的是可以在任何能够传输数据的信道上再建立一层数据链路的底层封装。因此这次我们希望在TLS安全层上建立一个信道，并在上面建立一个PPP连接，实现类似VPN的功能。由于俺学艺不精，因此要分很多前置工作慢慢迭代，希望一步步的迭代能逐步做到最后想要的成果。</p>
 <h3 id="基于TCP流的PPP封装"><a href="#基于TCP流的PPP封装" class="headerlink" title="基于TCP流的PPP封装"></a>基于TCP流的PPP封装</h3><p>首先我们要做的就是想在TCP流上实现一个基本的PPP封装。由于pppd是对串口、网卡这样的流设备进行操作的，而我们的TCP流在Linux中不能表示为一个能用echo或cat进行操作的文件，所以必须用一些间接的手段。</p>
 <p>题外话，在Linux中，Socket虽然也存在相应的文件，但对Socket的读写使用的不是文件接口而是专用的网络接口，因此二者不能混为一谈。另外，bash提供了一个方便的接口发送TCP消息：<code>echo xxx &gt; dev/tcp/{ip}/{port}</code>，这条命令会向tcp://ip:port发送一条xxx的消息，但这个只是bash的语法糖，并不是说Linux实际存在这样的设备。</p>
 <p>不过我们有一个强大的软件可以实现这样的功能：socat。它可以在不同的数据之间转换，包括将tcp数据传输到一个虚拟终端文件上。这样的功能恰好是我们需要的，我们可以用熟悉的接口来解决复杂的问题了。</p>
@@ -168,7 +168,7 @@
 <p>稍微修改socat命令，如果换成udp协议建立的原始信道，那么速度更是变成了只有56Mbps/85Mbps这样的速率，局域网环境下应该不存在针对UDP的限速行为，因此发生这样的情况还是较为令人费解的。可能是iperf本身的问题，但换成iperf3后并没有结果的改变。</p>
 <h3 id="TLS流的建立"><a href="#TLS流的建立" class="headerlink" title="TLS流的建立"></a>TLS流的建立</h3><p>TLS是一种基于证书体系的安全系统，其可以提供更安全更可靠的流式数据传输。我们仍然采x用socat工具来帮助实现TLS流的建立。</p>
 <h5 id="生成自签名证书"><a href="#生成自签名证书" class="headerlink" title="生成自签名证书"></a>生成自签名证书</h5><p>我们需要的自签名证书涉及2个文件：保存密钥的key文件和保存加密过的证书信息的crt文件。然而，socat需要的并不单纯是这两个文件：它需要的是证书文件crt以及一个key和crt文件的打包文件。</p>
-<p><strong>密钥文件：</strong> <code>openssl ecparam -name prime256v1 -genkey -out ca.key</code>，其中，ecparam是指定密钥文件的算法。常用的算法有RSA和ECDSA。这里用的便是ECDSA算法的Prime256v1曲线。ECDSA算法的好处是生成key的速度更快，性能更好，占用的空间更小。</p>
+<p><strong>密钥文件：</strong> <code>openssl genpkey -algorithm Ed25519 -out ca.key</code>，其中，algorithm是指定密钥文件的算法。常用的算法有RSA，ECDSA和EdDSA。这里用的便是EdDSA算法的Ed25519曲线。EdDSA算法的好处是相比RSA，其生成key的速度更快，性能更好，占用的空间更小，相比ECDSA，由于使用的曲线安全性能更好，因此更加具有实用价值。</p>
 <p><strong>证书文件：</strong> <code>openssl req -new -key ca.key -x509 -days 3650 -out ca.crt</code>，这时，机器会要求你回答几个问题，大部分的问题都可以随意回答，但是Common Name这项必须是你用于访问这台服务器的IP地址或域名。因为如果服务器的IP或域名和证书中Common Name项的内容不同，那么客户端就会拒绝连接，保证安全性。</p>
 <p><strong>打包文件：</strong> <code>cat ca.key ca.crt &gt; ca.pem</code>，我们使用cat命令将ca.key和ca.crt两个文件简单地连接在一起即可。</p>
 <p>接下来我们要将生成的证书传输到另一台机器上面，保证两边的证书是完全相同的，才能连接成功。</p>
@@ -203,7 +203,7 @@
 
 <p>现在我们用<code>sudo traceroute -I www.baidu.com</code>测试，可以看到路由首先经过了192.168.5.1，表明数据是经过这个安全的隧道传输的。同样地，在其他的电脑上通过访问服务器的IP也可以转发到树莓派的SSH上，实现了安全隧道传输的VPN效果。</p>
 <h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>可以说，我们这个土制VPN还是非常粗糙的，可用性较差但不失正确性。通过该VPN我们可以隐藏自己真实要访问的网站，所有的流量都通过虚拟的隧道进行转发，同时，隧道本身也采用了安全的TLS。代理ARP的功能虽然没有实现，但是NAT也达到了更好的效果。实际上，真正的VPN还应该拥有动态IP池等等功能，但那是不断演进的结果了。</p>
-<p>这篇文章是 <a href="https://kb5000.github.io/2021/02/09/%E4%B8%B2%E5%8F%A3%E4%B8%8A%E7%BD%91%E5%AE%9E%E9%AA%8C/" target="_blank" rel="noopener">串口上网实验</a> 的一个衍生探究，更多集中在如何在一个已经建立好的信道上进行更加低级的数据传输。正如标题所说，整个过程建立了一个“VPN”，可以利用目标电脑的网络环境来进行上网。当然，我们也可以继续深入下去其中的很多问题：为什么建立的信道上下行出现了严重的速度不对等现象？如何提高信道的利用率达到更高的速度？不使用ppp封包，在Windows下如何实现这样的功能（Windows下的wsl不支持ppp功能）？下一步可能是希望在信道连接建立后传输IPv6的数据，毕竟PPP是个很古老的协议了。</p>
+<p>这篇文章是 <a href="https://kb5000.github.io/2021/02/09/%E4%B8%B2%E5%8F%A3%E4%B8%8A%E7%BD%91%E5%AE%9E%E9%AA%8C/">串口上网实验</a> 的一个衍生探究，更多集中在如何在一个已经建立好的信道上进行更加低级的数据传输。正如标题所说，整个过程建立了一个“VPN”，可以利用目标电脑的网络环境来进行上网。当然，我们也可以继续深入下去其中的很多问题：为什么建立的信道上下行出现了严重的速度不对等现象？如何提高信道的利用率达到更高的速度？不使用ppp封包，在Windows下如何实现这样的功能（Windows下的wsl不支持ppp功能）？下一步可能是希望在信道连接建立后传输IPv6的数据，毕竟PPP是个很古老的协议了。</p>
 
       
 
