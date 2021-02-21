@@ -16,7 +16,7 @@
 <meta property="og:description" content="这次呢我们接着上一次 串口上网实验 的文章来继续深入。上一篇我们提到PPP封装可以做的工作远不止有在串口上建立数据链路这么简单，更重要的是可以在任何能够传输数据的信道上再建立一层数据链路的底层封装。因此这次我们希望在TLS安全层上建立一个信道，并在上面建立一个PPP连接，实现类似VPN的功能。由于俺学艺不精，因此要分很多前置工作慢慢迭代，希望一步步的迭代能逐步做到最后想要的成果。 基于TCP流的P">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2021-02-19T07:23:47.370Z">
-<meta property="article:modified_time" content="2021-02-20T07:22:32.086Z">
+<meta property="article:modified_time" content="2021-02-21T03:09:18.599Z">
 <meta property="article:author" content="KB5000">
 <meta name="twitter:card" content="summary">
   
@@ -75,6 +75,8 @@
 		<nav class="header-nav">
 			<div class="social">
 				
+					<a class="mail" target="_blank" href="mailto:a123edcrfv@live.cn" title="mail"><i class="icon-mail"></i></a>
+		        
 			</div>
 		</nav>
 	</header>		
@@ -106,6 +108,8 @@
 			<nav class="header-nav">
 				<div class="social">
 					
+						<a class="mail" target="_blank" href="mailto:a123edcrfv@live.cn" title="mail"><i class="icon-mail"></i></a>
+			        
 				</div>
 			</nav>
 
@@ -166,7 +170,7 @@
 <p>提前输入好命令，两端按下回车（因为pppd的超时默认很少，时间太长会断掉），可以看到两端已经拿到了IP，再打开终端相互ping，如果ping通证明链路已经完好了。</p>
 <p>稍微修改pppd命令，通过<code>nodeflate nobsdcomp</code>关掉压缩功能后进行测速，发现速度仅能达到50Mbps和100Mbps的非常不对称的速率。相比直连情况下树莓派的300Mbps网卡还是有很大差距的，但相比上一篇的串口速率已经是一个质的飞跃了。</p>
 <p>稍微修改socat命令，如果换成udp协议建立的原始信道，那么速度更是变成了只有56Mbps/85Mbps这样的速率，局域网环境下应该不存在针对UDP的限速行为，因此发生这样的情况还是较为令人费解的。可能是iperf本身的问题，但换成iperf3后并没有结果的改变。</p>
-<h3 id="TLS流的建立"><a href="#TLS流的建立" class="headerlink" title="TLS流的建立"></a>TLS流的建立</h3><p>TLS是一种基于证书体系的安全系统，其可以提供更安全更可靠的流式数据传输。我们仍然采x用socat工具来帮助实现TLS流的建立。</p>
+<h3 id="TLS流的建立"><a href="#TLS流的建立" class="headerlink" title="TLS流的建立"></a>TLS流的建立</h3><p>TLS是一种基于证书体系的安全系统，其可以提供更安全更可靠的流式数据传输。我们仍然采用socat工具来帮助实现TLS流的建立。</p>
 <h5 id="生成自签名证书"><a href="#生成自签名证书" class="headerlink" title="生成自签名证书"></a>生成自签名证书</h5><p>我们需要的自签名证书涉及2个文件：保存密钥的key文件和保存加密过的证书信息的crt文件。然而，socat需要的并不单纯是这两个文件：它需要的是证书文件crt以及一个key和crt文件的打包文件。</p>
 <p><strong>密钥文件：</strong> <code>openssl genpkey -algorithm Ed25519 -out ca.key</code>，其中，algorithm是指定密钥文件的算法。常用的算法有RSA，ECDSA和EdDSA。这里用的便是EdDSA算法的Ed25519曲线。EdDSA算法的好处是相比RSA，其生成key的速度更快，性能更好，占用的空间更小，相比ECDSA，由于使用的曲线安全性能更好，因此更加具有实用价值。</p>
 <p><strong>证书文件：</strong> <code>openssl req -new -key ca.key -x509 -days 3650 -out ca.crt</code>，这时，机器会要求你回答几个问题，大部分的问题都可以随意回答，但是Common Name这项必须是你用于访问这台服务器的IP地址或域名。因为如果服务器的IP或域名和证书中Common Name项的内容不同，那么客户端就会拒绝连接，保证安全性。</p>
