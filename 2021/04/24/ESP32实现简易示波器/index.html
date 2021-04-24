@@ -6,19 +6,21 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://kb5000.github.io">
-  <title>“土制VPN”：基于TLS流的PPP封装 | KB5000</title>
+  <title>ESP32实现简易示波器 | KB5000</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="这次呢我们接着上一次 串口上网实验 的文章来继续深入。上一篇我们提到PPP封装可以做的工作远不止有在串口上建立数据链路这么简单，更重要的是可以在任何能够传输数据的信道上再建立一层数据链路的底层封装。因此这次我们希望在TLS安全层上建立一个信道，并在上面建立一个PPP连接，实现类似VPN的功能。由于俺学艺不精，因此要分很多前置工作慢慢迭代，希望一步步的迭代能逐步做到最后想要的成果。 基于TCP流的P">
+  <meta name="description" content="最近入手了正点原子家的DS100示波器，因此想着自己用ESP32做一个简单的示波器玩玩，顺便测试一下ESP32的性能。 电路设计ESP32有很多ADC通道，但是为了简单起见，这里只实现一个单通道的示波器，实际上如果只是玩玩的话至少还是双通道才够用，这个可能等后续有时间再添加吧。  设计很简单，首先是给待测元件加一个限流电阻（视情况，小电压不加）。由于ESP32的ADC在0~0.1V和3.1~3.3">
 <meta property="og:type" content="article">
-<meta property="og:title" content="“土制VPN”：基于TLS流的PPP封装">
-<meta property="og:url" content="https://kb5000.github.io/2021/02/19/%E2%80%9C%E5%9C%9F%E5%88%B6VPN%E2%80%9D%EF%BC%9A%E5%9F%BA%E4%BA%8ETLS%E6%B5%81%E7%9A%84PPP%E5%B0%81%E8%A3%85/index.html">
+<meta property="og:title" content="ESP32实现简易示波器">
+<meta property="og:url" content="https://kb5000.github.io/2021/04/24/ESP32%E5%AE%9E%E7%8E%B0%E7%AE%80%E6%98%93%E7%A4%BA%E6%B3%A2%E5%99%A8/index.html">
 <meta property="og:site_name" content="KB5000">
-<meta property="og:description" content="这次呢我们接着上一次 串口上网实验 的文章来继续深入。上一篇我们提到PPP封装可以做的工作远不止有在串口上建立数据链路这么简单，更重要的是可以在任何能够传输数据的信道上再建立一层数据链路的底层封装。因此这次我们希望在TLS安全层上建立一个信道，并在上面建立一个PPP连接，实现类似VPN的功能。由于俺学艺不精，因此要分很多前置工作慢慢迭代，希望一步步的迭代能逐步做到最后想要的成果。 基于TCP流的P">
+<meta property="og:description" content="最近入手了正点原子家的DS100示波器，因此想着自己用ESP32做一个简单的示波器玩玩，顺便测试一下ESP32的性能。 电路设计ESP32有很多ADC通道，但是为了简单起见，这里只实现一个单通道的示波器，实际上如果只是玩玩的话至少还是双通道才够用，这个可能等后续有时间再添加吧。  设计很简单，首先是给待测元件加一个限流电阻（视情况，小电压不加）。由于ESP32的ADC在0~0.1V和3.1~3.3">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2021-02-19T07:23:47.370Z">
-<meta property="article:modified_time" content="2021-02-21T03:09:18.599Z">
+<meta property="og:image" content="https://kb5000.github.io/images/ESP32_Circuit.drawio.png">
+<meta property="article:published_time" content="2021-04-24T08:21:29.503Z">
+<meta property="article:modified_time" content="2021-04-24T10:26:12.740Z">
 <meta property="article:author" content="KB5000">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://kb5000.github.io/images/ESP32_Circuit.drawio.png">
   
     <link rel="alternative" href="/atom.xml" title="KB5000" type="application/atom+xml">
   
@@ -132,82 +134,54 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-“土制VPN”：基于TLS流的PPP封装" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-ESP32实现简易示波器" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 class="article-title" itemprop="name">
-      “土制VPN”：基于TLS流的PPP封装
+      ESP32实现简易示波器
     </h1>
   
 
         
-        <a href="/2021/02/19/%E2%80%9C%E5%9C%9F%E5%88%B6VPN%E2%80%9D%EF%BC%9A%E5%9F%BA%E4%BA%8ETLS%E6%B5%81%E7%9A%84PPP%E5%B0%81%E8%A3%85/" class="archive-article-date">
-  	<time datetime="2021-02-19T07:23:47.370Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2021-02-19</time>
+        <a href="/2021/04/24/ESP32%E5%AE%9E%E7%8E%B0%E7%AE%80%E6%98%93%E7%A4%BA%E6%B3%A2%E5%99%A8/" class="archive-article-date">
+  	<time datetime="2021-04-24T08:21:29.503Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2021-04-24</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>这次呢我们接着上一次 <a href="https://kb5000.github.io/2021/02/09/%E4%B8%B2%E5%8F%A3%E4%B8%8A%E7%BD%91%E5%AE%9E%E9%AA%8C/">串口上网实验</a> 的文章来继续深入。上一篇我们提到PPP封装可以做的工作远不止有在串口上建立数据链路这么简单，更重要的是可以在任何能够传输数据的信道上再建立一层数据链路的底层封装。因此这次我们希望在TLS安全层上建立一个信道，并在上面建立一个PPP连接，实现类似VPN的功能。由于俺学艺不精，因此要分很多前置工作慢慢迭代，希望一步步的迭代能逐步做到最后想要的成果。</p>
-<h3 id="基于TCP流的PPP封装"><a href="#基于TCP流的PPP封装" class="headerlink" title="基于TCP流的PPP封装"></a>基于TCP流的PPP封装</h3><p>首先我们要做的就是想在TCP流上实现一个基本的PPP封装。由于pppd是对串口、网卡这样的流设备进行操作的，而我们的TCP流在Linux中不能表示为一个能用echo或cat进行操作的文件，所以必须用一些间接的手段。</p>
-<p>题外话，在Linux中，Socket虽然也存在相应的文件，但对Socket的读写使用的不是文件接口而是专用的网络接口，因此二者不能混为一谈。另外，bash提供了一个方便的接口发送TCP消息：<code>echo xxx &gt; dev/tcp/{ip}/{port}</code>，这条命令会向tcp://ip:port发送一条xxx的消息，但这个只是bash的语法糖，并不是说Linux实际存在这样的设备。</p>
-<p>不过我们有一个强大的软件可以实现这样的功能：socat。它可以在不同的数据之间转换，包括将tcp数据传输到一个虚拟终端文件上。这样的功能恰好是我们需要的，我们可以用熟悉的接口来解决复杂的问题了。</p>
-<p>首先在两台机器上安装socat：<code>sudo apt install socat</code></p>
-<p><strong>服务器：</strong> <code>socat -d -d tcp-listen:15000 pty</code></p>
-<p><strong>树莓派：</strong> <code>socat -d -d tcp:192.168.2.6:15000 pty</code></p>
-<p>这里，<code>-d -d</code>是让socat输出详细的调试信息，这里的目的是显示出socat分配的虚拟IO设备名；<br><code>tcp-listen:15000</code>是在15000建立一个tcp的监听端口；<br><code>tcp:192.168.2.6:15000</code>就是使用TCP协议连接到这个地址；<br><code>pty</code>是请求一个虚拟的终端设备连接到左边的流上面。</p>
-<p>socat实际上就是将两个不同的流连接在一起。这里就是将网络接口的TCP和文件接口的PTY连接在一起。</p>
-<p>下面我们在两端建立PPP连接。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">~ &gt; socat -d -d tcp-listen:15000 pty</span><br><span class="line">2021/02/19 15:45:50 socat[574405] N listening on AF=2 0.0.0.0:15000</span><br><span class="line">2021/02/19 15:45:57 socat[574405] N accepting connection from AF=2 192.168.2.3:47036 on AF=2 192.168.2.6:15000</span><br><span class="line">2021/02/19 15:45:57 socat[574405] N PTY is /dev/pts/4</span><br><span class="line">2021/02/19 15:45:57 socat[574405] N starting data transfer loop with FDs [6,6] and [5,5]</span><br></pre></td></tr></table></figure>
+        <p>最近入手了正点原子家的DS100示波器，因此想着自己用ESP32做一个简单的示波器玩玩，顺便测试一下ESP32的性能。</p>
+<h3 id="电路设计"><a href="#电路设计" class="headerlink" title="电路设计"></a>电路设计</h3><p>ESP32有很多ADC通道，但是为了简单起见，这里只实现一个单通道的示波器，实际上如果只是玩玩的话至少还是双通道才够用，这个可能等后续有时间再添加吧。</p>
+<p><img src="/images/ESP32_Circuit.drawio.png" alt="电路图"></p>
+<p>设计很简单，首先是给待测元件加一个限流电阻（视情况，小电压不加）。由于ESP32的ADC在0~0.1V和3.1~3.3V之间是没有办法给出ADC值的，因此如果没有直流偏置就没有办法测出小电压时的情况。为了解决这个问题，这里采用了一个简单的分压电路用于给待测元件一个0.3V左右的参考电平。</p>
+<h3 id="功能设计"><a href="#功能设计" class="headerlink" title="功能设计"></a>功能设计</h3><p>这个示波器应该有如下几个基本功能：</p>
+<ol>
+<li>以一个较为稳定的频率进行采样</li>
+<li>具有触发功能，能够在较低频率的条件下实现上升沿/下降沿触发</li>
+<li>记录到波形后将数据实时传输到电脑</li>
+</ol>
+<p>针对上述需求，为了简单起见，这里采用Arduino IDE进行快速开发，同时做如下设计。</p>
+<ol>
+<li>采用时钟中断进行采样处理，频率可调</li>
+<li>设定上升沿/下降沿时才记录数据</li>
+<li>记录好数据后通过串口传输到电脑</li>
+</ol>
+<h3 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ADC_PIN 34</span></span><br><span class="line"><span class="comment">// 每次触发记录数据个数</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LEN 5000</span></span><br><span class="line"><span class="comment">// 触发电压，以ADC值计</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> TRIGGER 1000</span></span><br><span class="line"><span class="comment">// 采样频率，Hz</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> FREQ 10000</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">hw_timer_t</span>* timer = <span class="literal">NULL</span>;</span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> IRAM_ATTR <span class="title">Timer0_CallBack</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"><span class="function">short <span class="title">calibrate</span><span class="params">(short val)</span></span>;</span><br><span class="line"></span><br><span class="line">short writeBuf[LEN], outBuf[LEN];</span><br><span class="line">short lastVolte = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">int</span> len = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">bool</span> triggering = <span class="literal">false</span>, dataReady = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setup</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="comment">// put your setup code here, to run once:</span></span><br><span class="line">  <span class="built_in">Serial</span>.<span class="built_in">begin</span>(<span class="number">230400</span>);</span><br><span class="line">  <span class="comment">// 采用80MHz PLL时钟，进行分频后得到1MHz的时钟</span></span><br><span class="line">  timer = timerBegin(<span class="number">0</span>, <span class="number">80</span>, <span class="literal">true</span>);</span><br><span class="line">  timerAttachInterrupt(timer, Timer0_CallBack, <span class="literal">true</span>);</span><br><span class="line">  timerAlarmWrite(timer, <span class="number">1000000</span> / FREQ, <span class="literal">true</span>);</span><br><span class="line">  timerAlarmEnable(timer);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">loop</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="comment">// put your main code here, to run repeatedly:</span></span><br><span class="line">  <span class="keyword">if</span> (dataReady) &#123;</span><br><span class="line">    dataReady = <span class="literal">false</span>;</span><br><span class="line">    <span class="comment">// 拷贝数据，防止被记录过程干扰，顺便进行校准</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; LEN; i++) &#123;</span><br><span class="line">      outBuf[i] = calibrate(writeBuf[i]);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; LEN; i++) &#123;</span><br><span class="line">      <span class="built_in">Serial</span>.<span class="built_in">println</span>(outBuf[i]);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">short <span class="title">calibrate</span><span class="params">(short val)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// <span class="doctag">TODO:</span> 根据真实值和ADC的系统误差校正出正确的电压，可以用查表法</span></span><br><span class="line">    <span class="keyword">return</span> val;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> IRAM_ATTR <span class="title">Timer0_CallBack</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">  <span class="comment">// 读取电压</span></span><br><span class="line">  <span class="keyword">register</span> <span class="keyword">int</span> volte = <span class="built_in">analogRead</span>(ADC_PIN);</span><br><span class="line">  <span class="keyword">if</span> (triggering) &#123;</span><br><span class="line">    <span class="comment">// 触发模式下直接记录数据</span></span><br><span class="line">    writeBuf[len++] = volte;</span><br><span class="line">    <span class="keyword">if</span> (len == LEN) &#123;</span><br><span class="line">      len = <span class="number">0</span>;</span><br><span class="line">      dataReady = <span class="literal">true</span>;</span><br><span class="line">      triggering = <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (lastVolte &lt; TRIGGER &amp;&amp; volte &gt;= TRIGGER) &#123;</span><br><span class="line">    <span class="comment">// 检测触发条件时开始记录</span></span><br><span class="line">    triggering = <span class="literal">true</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  lastVolte = volte;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>可以看到为服务器分配的虚拟终端是/dev/pts/4，因此设备就是这个了。树莓派的类似，这里是/dev/pts/2</p>
-<p><strong>服务器：</strong> <code>sudo pppd -detach /dev/pts/4 192.168.5.1:192.168.5.2 noauth nocrtscts local</code></p>
-<p><strong>树莓派：</strong> <code>sudo pppd -detach /dev/pts/2 noauth nocrtscts local</code></p>
-<p>提前输入好命令，两端按下回车（因为pppd的超时默认很少，时间太长会断掉），可以看到两端已经拿到了IP，再打开终端相互ping，如果ping通证明链路已经完好了。</p>
-<p>稍微修改pppd命令，通过<code>nodeflate nobsdcomp</code>关掉压缩功能后进行测速，发现速度仅能达到50Mbps和100Mbps的非常不对称的速率。相比直连情况下树莓派的300Mbps网卡还是有很大差距的，但相比上一篇的串口速率已经是一个质的飞跃了。</p>
-<p>稍微修改socat命令，如果换成udp协议建立的原始信道，那么速度更是变成了只有56Mbps/85Mbps这样的速率，局域网环境下应该不存在针对UDP的限速行为，因此发生这样的情况还是较为令人费解的。可能是iperf本身的问题，但换成iperf3后并没有结果的改变。</p>
-<h3 id="TLS流的建立"><a href="#TLS流的建立" class="headerlink" title="TLS流的建立"></a>TLS流的建立</h3><p>TLS是一种基于证书体系的安全系统，其可以提供更安全更可靠的流式数据传输。我们仍然采用socat工具来帮助实现TLS流的建立。</p>
-<h5 id="生成自签名证书"><a href="#生成自签名证书" class="headerlink" title="生成自签名证书"></a>生成自签名证书</h5><p>我们需要的自签名证书涉及2个文件：保存密钥的key文件和保存加密过的证书信息的crt文件。然而，socat需要的并不单纯是这两个文件：它需要的是证书文件crt以及一个key和crt文件的打包文件。</p>
-<p><strong>密钥文件：</strong> <code>openssl genpkey -algorithm Ed25519 -out ca.key</code>，其中，algorithm是指定密钥文件的算法。常用的算法有RSA，ECDSA和EdDSA。这里用的便是EdDSA算法的Ed25519曲线。EdDSA算法的好处是相比RSA，其生成key的速度更快，性能更好，占用的空间更小，相比ECDSA，由于使用的曲线安全性能更好，因此更加具有实用价值。</p>
-<p><strong>证书文件：</strong> <code>openssl req -new -key ca.key -x509 -days 3650 -out ca.crt</code>，这时，机器会要求你回答几个问题，大部分的问题都可以随意回答，但是Common Name这项必须是你用于访问这台服务器的IP地址或域名。因为如果服务器的IP或域名和证书中Common Name项的内容不同，那么客户端就会拒绝连接，保证安全性。</p>
-<p><strong>打包文件：</strong> <code>cat ca.key ca.crt &gt; ca.pem</code>，我们使用cat命令将ca.key和ca.crt两个文件简单地连接在一起即可。</p>
-<p>接下来我们要将生成的证书传输到另一台机器上面，保证两边的证书是完全相同的，才能连接成功。</p>
-<h5 id="建立TLS流"><a href="#建立TLS流" class="headerlink" title="建立TLS流"></a>建立TLS流</h5><p>下面我们就可以用socat命令来建立TLS流了，过程和建立TCP流类似。但首先我们还要切换到刚刚保存证书的那个目录下。</p>
-<p><strong>服务器：</strong> <code>socat -d -d openssl-listen:15000,cert=ca.pem,cafile=ca.crt pty</code></p>
-<p><strong>树莓派：</strong> <code>socat -d -d openssl:192.168.2.6:15000,cert=ca.pem,cafile=ca.crt pty</code></p>
-<p>现在，屏幕上应该已经显示了两台机器分配的PTY，这表明已经成功建立了TLS数据流。</p>
-<p>如果将服务器和树莓派的命令对调，也就是让服务器去连接树莓派的话，由于刚刚提到客户端会对连接的地址进行验证，因此反过来是会连接失败的，而且现象是客户端首先断开连接，服务端并没有显示错误信息。但如果我们生成证书时使用的是域名，那么只要这个域名可以指向那台机器，同时那台机器拥有证书文件，客户端就会认为这就是正确的服务器从而连接。</p>
-<h3 id="建立TLS流的PPP封装"><a href="#建立TLS流的PPP封装" class="headerlink" title="建立TLS流的PPP封装"></a>建立TLS流的PPP封装</h3><p>有了上面的基础，建立基于TLS流的PPP封装已经是呼之欲出了。保持刚刚建立的TLS流，输入以下命令：（更改为你的/dev/pts/x）</p>
-<p><strong>服务器：</strong> <code>sudo pppd -detach /dev/pts/8 192.168.5.1:192.168.5.2 noauth nocrtscts local</code></p>
-<p><strong>树莓派：</strong> <code>sudo pppd -detach /dev/pts/6 noauth nocrtscts local</code></p>
-<p>现在就应该可以互相ping通对方了，至此我们已经成功建立了TLS流上的PPP封装。</p>
-<h3 id="速度测试"><a href="#速度测试" class="headerlink" title="速度测试"></a>速度测试</h3><p>同样地，我们在pppd中更改服务器的选项，用<code>nodeflate nobsdcomp</code>命令关掉压缩，以便进行更准确的速度测试，得到了40Mbps/68Mbps的速度。相比TCP流又下降了不少，大概是TLS本身传输加密数据本身数据量较大导致的。</p>
-<p>除了基于TCP的TLS流外，还有基于UDP的DTLS流，但是由于Socat直到一个月前才放出支持DTLS的新版本，我这台机器上还没有安装，因此只能等待后续更新了。</p>
-<h3 id="实现NAT"><a href="#实现NAT" class="headerlink" title="实现NAT"></a>实现NAT</h3><p>既然我们要建立一个VPN，那么必不可少的就是能让树莓派使用服务器的网络进行上网。这意味着我们不能再像上一篇文章那样通过修改网关路由表这样大动干戈的方式来实现树莓派的网络访问了。当然，除了NAT以外，还可以通过ARP Proxy的方式实现类似的效果，但ARP Proxy需要有一个空余IP，仍然和网关有关系，因此这里仍然采用NAT的办法。</p>
-<p>我们做两个NAT：一个是Source NAT，用于树莓派访问外部网络时的映射；另一个是Destination NAT，用于外部网络访问树莓派的SSH，也就是端口转发。因此下面的操作都是在服务器上进行的。</p>
-<p>首先我们允许正常的路由转发：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo iptables -A FORWARD -d 192.168.5.0/24 -j ACCEPT</span><br><span class="line">sudo iptables -A FORWARD -s 192.168.5.0/24 -j ACCEPT</span><br></pre></td></tr></table></figure>
-
-<p>接下来实现SNAT，注意更换网卡的名称eth0为你自己的</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo iptables -t nat -A POSTROUTING -s 192.168.5.0/24 -o eth0 -j MASQUERADE</span><br></pre></td></tr></table></figure>
-
-<p>最后实现DNAT，就可以用其他的电脑访问树莓派了，这里是将192.168.2.6:15001转发到了192.168.5.2:22</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo iptables -t nat -A PREROUTING -p tcp -d 192.168.2.6 --dport 15001 -j DNAT --to-destination 192.</span><br><span class="line">168.5.2:22</span><br></pre></td></tr></table></figure>
-
-<p>当然，经过了这样的操作树莓派还是没有能够利用这条线路上网。我们还需要重新配置以下默认路由。以下在树莓派上面操作：</p>
-<p>首先把服务器的IP设置为通过原有的网卡：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo route add 192.168.2.6 gw 192.168.2.1 dev eth0</span><br></pre></td></tr></table></figure>
-
-<p>接下来设置默认的路由</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo route add -net default gw 192.168.5.1 dev ppp0</span><br></pre></td></tr></table></figure>
-
-<p>现在我们用<code>sudo traceroute -I www.baidu.com</code>测试，可以看到路由首先经过了192.168.5.1，表明数据是经过这个安全的隧道传输的。同样地，在其他的电脑上通过访问服务器的IP也可以转发到树莓派的SSH上，实现了安全隧道传输的VPN效果。</p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>可以说，我们这个土制VPN还是非常粗糙的，可用性较差但不失正确性。通过该VPN我们可以隐藏自己真实要访问的网站，所有的流量都通过虚拟的隧道进行转发，同时，隧道本身也采用了安全的TLS。代理ARP的功能虽然没有实现，但是NAT也达到了更好的效果。实际上，真正的VPN还应该拥有动态IP池等等功能，但那是不断演进的结果了。</p>
-<p>这篇文章是 <a href="https://kb5000.github.io/2021/02/09/%E4%B8%B2%E5%8F%A3%E4%B8%8A%E7%BD%91%E5%AE%9E%E9%AA%8C/">串口上网实验</a> 的一个衍生探究，更多集中在如何在一个已经建立好的信道上进行更加低级的数据传输。正如标题所说，整个过程建立了一个“VPN”，可以利用目标电脑的网络环境来进行上网。当然，我们也可以继续深入下去其中的很多问题：为什么建立的信道上下行出现了严重的速度不对等现象？如何提高信道的利用率达到更高的速度？不使用ppp封包，在Windows下如何实现这样的功能（Windows下的wsl不支持ppp功能）？下一步可能是希望在信道连接建立后传输IPv6的数据，毕竟PPP是个很古老的协议了。</p>
+<h3 id="结果展示和性能分析"><a href="#结果展示和性能分析" class="headerlink" title="结果展示和性能分析"></a>结果展示和性能分析</h3><p>这个过后加</p>
+<h3 id="问题和改进"><a href="#问题和改进" class="headerlink" title="问题和改进"></a>问题和改进</h3><p>这个简易示波器还是存在很多问题的，这里列举一些以及可能的解决方案。</p>
+<ol>
+<li>目前采用直流分压电路进行直流偏置，而这样带来的问题就是精度下降。如果采用运放电路来实现直流偏置可能会好一些，但最好的办法还是实现隔离地，然后就可以为所欲为了。可惜ESP32的ADC本身似乎做不到隔离。</li>
+<li>这里的时钟中断和串口输出应该是在同一个核上做的（待证实），串口输出是个很费时间得过程，因此需要让二者异步进行。这可以通过<code>xTaskCreatePinnedToCore</code>函数将串口输出放在另一个核上来实现。顺带一提，ESP32在Arduino上进行开发时，函数默认在Core 1上运行，Core 0应该是空闲的。</li>
+<li>ADC的电压需要校准，这个在代码中有所体现，可以通过打表来进行校准。</li>
+</ol>
+<h3 id="总结和展望"><a href="#总结和展望" class="headerlink" title="总结和展望"></a>总结和展望</h3><p>这次的小示波器还是很有意思的。这种东西要做的简单可以非常简单，但想做好就难得多了。这里也是想着不能浪费ESP32这么一个强大的处理器，虽然不是专业做这种事情的，但是自己做一个还是可以接受的，看看音频波形什么的应该还是绰绰有余。</p>
+<p>有了小示波器之后能做的就多起来了，比如加上双通道功能然后增加XY模式，可以做一个扫描电视，虽然可能会非常慢。或者可以听听从示波器采集到的音频信号转成的wav文件，看看是不是变成了全损音质。当然也可以做一下信号协议分析，看看很多传输协议的物理层是如何实现的等等。</p>
+<p>不过我这老挖坑大师了，看什么时候能做出来吧。</p>
 
       
 
@@ -266,7 +240,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=https://kb5000.github.io/2021/02/19/%E2%80%9C%E5%9C%9F%E5%88%B6VPN%E2%80%9D%EF%BC%9A%E5%9F%BA%E4%BA%8ETLS%E6%B5%81%E7%9A%84PPP%E5%B0%81%E8%A3%85/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=https://kb5000.github.io/2021/04/24/ESP32%E5%AE%9E%E7%8E%B0%E7%AE%80%E6%98%93%E7%A4%BA%E6%B3%A2%E5%99%A8/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -280,18 +254,9 @@
   
 <nav id="article-nav">
   
-    <a href="/2021/04/24/ESP32%E5%AE%9E%E7%8E%B0%E7%AE%80%E6%98%93%E7%A4%BA%E6%B3%A2%E5%99%A8/" id="article-nav-newer" class="article-nav-link-wrap">
-      <i class="icon-circle-left"></i>
-      <div class="article-nav-title">
-        
-          ESP32实现简易示波器
-        
-      </div>
-    </a>
   
-  
-    <a href="/2021/02/09/%E4%B8%B2%E5%8F%A3%E4%B8%8A%E7%BD%91%E5%AE%9E%E9%AA%8C/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">串口上网实验</div>
+    <a href="/2021/02/19/%E2%80%9C%E5%9C%9F%E5%88%B6VPN%E2%80%9D%EF%BC%9A%E5%9F%BA%E4%BA%8ETLS%E6%B5%81%E7%9A%84PPP%E5%B0%81%E8%A3%85/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">“土制VPN”：基于TLS流的PPP封装</div>
       <i class="icon-circle-right"></i>
     </a>
   

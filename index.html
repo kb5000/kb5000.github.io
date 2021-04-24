@@ -130,6 +130,96 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-ESP32实现简易示波器" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2021/04/24/ESP32%E5%AE%9E%E7%8E%B0%E7%AE%80%E6%98%93%E7%A4%BA%E6%B3%A2%E5%99%A8/">ESP32实现简易示波器</a>
+    </h1>
+  
+
+        
+        <a href="/2021/04/24/ESP32%E5%AE%9E%E7%8E%B0%E7%AE%80%E6%98%93%E7%A4%BA%E6%B3%A2%E5%99%A8/" class="archive-article-date">
+  	<time datetime="2021-04-24T08:21:29.503Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2021-04-24</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>最近入手了正点原子家的DS100示波器，因此想着自己用ESP32做一个简单的示波器玩玩，顺便测试一下ESP32的性能。</p>
+<h3 id="电路设计"><a href="#电路设计" class="headerlink" title="电路设计"></a>电路设计</h3><p>ESP32有很多ADC通道，但是为了简单起见，这里只实现一个单通道的示波器，实际上如果只是玩玩的话至少还是双通道才够用，这个可能等后续有时间再添加吧。</p>
+<p><img src="/images/ESP32_Circuit.drawio.png" alt="电路图"></p>
+<p>设计很简单，首先是给待测元件加一个限流电阻（视情况，小电压不加）。由于ESP32的ADC在0~0.1V和3.1~3.3V之间是没有办法给出ADC值的，因此如果没有直流偏置就没有办法测出小电压时的情况。为了解决这个问题，这里采用了一个简单的分压电路用于给待测元件一个0.3V左右的参考电平。</p>
+<h3 id="功能设计"><a href="#功能设计" class="headerlink" title="功能设计"></a>功能设计</h3><p>这个示波器应该有如下几个基本功能：</p>
+<ol>
+<li>以一个较为稳定的频率进行采样</li>
+<li>具有触发功能，能够在较低频率的条件下实现上升沿/下降沿触发</li>
+<li>记录到波形后将数据实时传输到电脑</li>
+</ol>
+<p>针对上述需求，为了简单起见，这里采用Arduino IDE进行快速开发，同时做如下设计。</p>
+<ol>
+<li>采用时钟中断进行采样处理，频率可调</li>
+<li>设定上升沿/下降沿时才记录数据</li>
+<li>记录好数据后通过串口传输到电脑</li>
+</ol>
+<h3 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ADC_PIN 34</span></span><br><span class="line"><span class="comment">// 每次触发记录数据个数</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LEN 5000</span></span><br><span class="line"><span class="comment">// 触发电压，以ADC值计</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> TRIGGER 1000</span></span><br><span class="line"><span class="comment">// 采样频率，Hz</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> FREQ 10000</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">hw_timer_t</span>* timer = <span class="literal">NULL</span>;</span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> IRAM_ATTR <span class="title">Timer0_CallBack</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"><span class="function">short <span class="title">calibrate</span><span class="params">(short val)</span></span>;</span><br><span class="line"></span><br><span class="line">short writeBuf[LEN], outBuf[LEN];</span><br><span class="line">short lastVolte = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">int</span> len = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">bool</span> triggering = <span class="literal">false</span>, dataReady = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setup</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="comment">// put your setup code here, to run once:</span></span><br><span class="line">  <span class="built_in">Serial</span>.<span class="built_in">begin</span>(<span class="number">230400</span>);</span><br><span class="line">  <span class="comment">// 采用80MHz PLL时钟，进行分频后得到1MHz的时钟</span></span><br><span class="line">  timer = timerBegin(<span class="number">0</span>, <span class="number">80</span>, <span class="literal">true</span>);</span><br><span class="line">  timerAttachInterrupt(timer, Timer0_CallBack, <span class="literal">true</span>);</span><br><span class="line">  timerAlarmWrite(timer, <span class="number">1000000</span> / FREQ, <span class="literal">true</span>);</span><br><span class="line">  timerAlarmEnable(timer);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">loop</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="comment">// put your main code here, to run repeatedly:</span></span><br><span class="line">  <span class="keyword">if</span> (dataReady) &#123;</span><br><span class="line">    dataReady = <span class="literal">false</span>;</span><br><span class="line">    <span class="comment">// 拷贝数据，防止被记录过程干扰，顺便进行校准</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; LEN; i++) &#123;</span><br><span class="line">      outBuf[i] = calibrate(writeBuf[i]);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; LEN; i++) &#123;</span><br><span class="line">      <span class="built_in">Serial</span>.<span class="built_in">println</span>(outBuf[i]);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">short <span class="title">calibrate</span><span class="params">(short val)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// <span class="doctag">TODO:</span> 根据真实值和ADC的系统误差校正出正确的电压，可以用查表法</span></span><br><span class="line">    <span class="keyword">return</span> val;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> IRAM_ATTR <span class="title">Timer0_CallBack</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">  <span class="comment">// 读取电压</span></span><br><span class="line">  <span class="keyword">register</span> <span class="keyword">int</span> volte = <span class="built_in">analogRead</span>(ADC_PIN);</span><br><span class="line">  <span class="keyword">if</span> (triggering) &#123;</span><br><span class="line">    <span class="comment">// 触发模式下直接记录数据</span></span><br><span class="line">    writeBuf[len++] = volte;</span><br><span class="line">    <span class="keyword">if</span> (len == LEN) &#123;</span><br><span class="line">      len = <span class="number">0</span>;</span><br><span class="line">      dataReady = <span class="literal">true</span>;</span><br><span class="line">      triggering = <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (lastVolte &lt; TRIGGER &amp;&amp; volte &gt;= TRIGGER) &#123;</span><br><span class="line">    <span class="comment">// 检测触发条件时开始记录</span></span><br><span class="line">    triggering = <span class="literal">true</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  lastVolte = volte;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="结果展示和性能分析"><a href="#结果展示和性能分析" class="headerlink" title="结果展示和性能分析"></a>结果展示和性能分析</h3><p>这个过后加</p>
+<h3 id="问题和改进"><a href="#问题和改进" class="headerlink" title="问题和改进"></a>问题和改进</h3><p>这个简易示波器还是存在很多问题的，这里列举一些以及可能的解决方案。</p>
+<ol>
+<li>目前采用直流分压电路进行直流偏置，而这样带来的问题就是精度下降。如果采用运放电路来实现直流偏置可能会好一些，但最好的办法还是实现隔离地，然后就可以为所欲为了。可惜ESP32的ADC本身似乎做不到隔离。</li>
+<li>这里的时钟中断和串口输出应该是在同一个核上做的（待证实），串口输出是个很费时间得过程，因此需要让二者异步进行。这可以通过<code>xTaskCreatePinnedToCore</code>函数将串口输出放在另一个核上来实现。顺带一提，ESP32在Arduino上进行开发时，函数默认在Core 1上运行，Core 0应该是空闲的。</li>
+<li>ADC的电压需要校准，这个在代码中有所体现，可以通过打表来进行校准。</li>
+</ol>
+<h3 id="总结和展望"><a href="#总结和展望" class="headerlink" title="总结和展望"></a>总结和展望</h3><p>这次的小示波器还是很有意思的。这种东西要做的简单可以非常简单，但想做好就难得多了。这里也是想着不能浪费ESP32这么一个强大的处理器，虽然不是专业做这种事情的，但是自己做一个还是可以接受的，看看音频波形什么的应该还是绰绰有余。</p>
+<p>有了小示波器之后能做的就多起来了，比如加上双通道功能然后增加XY模式，可以做一个扫描电视，虽然可能会非常慢。或者可以听听从示波器采集到的音频信号转成的wav文件，看看是不是变成了全损音质。当然也可以做一下信号协议分析，看看很多传输协议的物理层是如何实现的等等。</p>
+<p>不过我这老挖坑大师了，看什么时候能做出来吧。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2021/04/24/ESP32%E5%AE%9E%E7%8E%B0%E7%AE%80%E6%98%93%E7%A4%BA%E6%B3%A2%E5%99%A8/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-“土制VPN”：基于TLS流的PPP封装" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
