@@ -20,7 +20,7 @@
 <meta property="og:image" content="https://kb5000.github.io/images/1669216326140.png">
 <meta property="og:image" content="https://kb5000.github.io/images/1669223046977.png">
 <meta property="article:published_time" content="2022-11-23T14:14:53.036Z">
-<meta property="article:modified_time" content="2023-05-14T15:20:15.611Z">
+<meta property="article:modified_time" content="2023-05-14T15:32:43.727Z">
 <meta property="article:author" content="KB5000">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://kb5000.github.io/images/l2tp-phy.drawio.png">
@@ -171,12 +171,12 @@
 <h2 id="工控机安装OpenWRT"><a href="#工控机安装OpenWRT" class="headerlink" title="工控机安装OpenWRT"></a>工控机安装OpenWRT</h2><p>这里采用的是工控机主机安装Ubuntu系统，运行其他服务，同时Ubuntu上安装Docker，在Docker内运行OpenWRT作为软路由。这样配置的好处是软路由可作为一个相对独立的组件，不影响主机系统。如果采用其他方案安装OpenWRT可跳过这节。</p>
 <p>首先要获取OpenWRT的系统镜像。可以在GitHub中搜索找到有人编译整合好的x86 OpenWRT镜像，这里下载到的是一个.img.gz文件，也就是硬盘镜像。</p>
 <h4 id="番外：将img硬盘镜像导入Docker"><a href="#番外：将img硬盘镜像导入Docker" class="headerlink" title="番外：将img硬盘镜像导入Docker"></a>番外：将img硬盘镜像导入Docker</h4><ol>
-<li>在Linux系统环境下得到一个img镜像，并创建一个空文件夹：<br> <img src="/images/1669216114608.png" alt=""></li>
-<li>通过 <code>fdisk -lu openwrt.img</code>命令检查img文件含有的分区和位置<br> <img src="/images/1669216326140.png" alt=""><br>可以看到，大小为925MB的分区应该就是根目录挂载的分区，因此只需要将该分区挂载出来即可，其他的启动分区对Docker来说没有用处。</li>
-<li>掏出计算器，根据前一张图，扇区大小为512B，而第二个分区起始位置为131584，因此需要挂载的位置为<code>131584 * 512B = 67371008B</code>，下面通过mount命令进行挂载：<code>sudo mount -o loop,offset=67371008 openwrt.img openwrt</code>。现在通过<code>ls openwrt</code>命令检查，即可看到已经成功挂载了。</li>
-<li>切换到<code>openwrt</code>目录，通过<code>sudo tar zcvf ../openwrt.tar.gz *</code>命令将该目录下所有内容打包到外面目录下的<code>openwrt.tar.gz</code>中。注意当前的工作目录，tar打包路径不要多一层。</li>
-<li>切换到上层目录，使用<code>sudo umount openwrt</code>停止挂载img文件。</li>
-<li>使用<code>docker import openwrt.tar.gz openwrt:latest</code>命令将文件导入Docker，至此镜像制作完成。</li>
+<li>在Linux系统环境下得到一个img镜像，并创建一个空文件夹：<br><img src="/images/1669216114608.png" alt=""></li>
+<li>通过 <code>fdisk -lu openwrt.img</code>命令检查img文件含有的分区和位置<br><img src="/images/1669216326140.png" alt=""><br>可以看到，大小为925MB的分区应该就是根目录挂载的分区，因此只需要将该分区挂载出来即可，其他的启动分区对Docker来说没有用处。</li>
+<li>掏出计算器，根据前一张图，扇区大小为512B，而第二个分区起始位置为131584，因此需要挂载的位置为 <code>131584 * 512B = 67371008B</code>，下面通过mount命令进行挂载：<code>sudo mount -o loop,offset=67371008 openwrt.img openwrt</code>。现在通过 <code>ls openwrt</code>命令检查，即可看到已经成功挂载了。</li>
+<li>切换到 <code>openwrt</code>目录，通过 <code>sudo tar zcvf ../openwrt.tar.gz *</code>命令将该目录下所有内容打包到外面目录下的 <code>openwrt.tar.gz</code>中。注意当前的工作目录，tar打包路径不要多一层。</li>
+<li>切换到上层目录，使用 <code>sudo umount openwrt</code>停止挂载img文件。</li>
+<li>使用 <code>docker import openwrt.tar.gz openwrt:latest</code>命令将文件导入Docker，至此镜像制作完成。</li>
 </ol>
 <h4 id="创建虚拟网络"><a href="#创建虚拟网络" class="headerlink" title="创建虚拟网络"></a>创建虚拟网络</h4><p>导入为Docker镜像后，接下来是创建Docker虚拟网络。</p>
 <p>Docker虚拟网络可以分为bridge、macvlan、ipvlan、host等多种形式。对于软路由来说，常用的有macvlan和bridge两种。在这里，我使用macvlan将主机网口共享给OpenWRT，而macvlan存在难以与宿主机通信的问题，因此这里添加了一个bridge网络专门用于docker和宿主机之间的通信。</p>
@@ -192,20 +192,19 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">docker run -dit --privileged --name=owrt --net=macnet --restart=always openwrt:latest /sbin/init</span><br><span class="line"></span><br><span class="line">docker network connect macnet2 owrt</span><br><span class="line"></span><br><span class="line">docker network connect obridge owrt</span><br></pre></td></tr></table></figure>
 
 <p>这里，首先将局域网macnet连接到容器内，然后依次将两个网络也连接进去。由于Docker在创建容器时只能指定一个网络，因此必须使用connect命令连接剩余的网络。</p>
-<p>此时OpenWRT应该已经运行起来了，但由于没有配置好IP，因此还无法通过浏览器访问。这里首先通过<code>docker exec -it owrt sh</code>命令打开一个控制台，通过命令行进行配置。</p>
+<p>此时OpenWRT应该已经运行起来了，但由于没有配置好IP，因此还无法通过浏览器访问。这里首先通过 <code>docker exec -it owrt sh</code>命令打开一个控制台，通过命令行进行配置。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&gt; vi &#x2F;etc&#x2F;config&#x2F;network</span><br><span class="line"></span><br><span class="line"># 将lan部分的ip换为192.168.2.1</span><br><span class="line">config interface &#39;lan&#39;</span><br><span class="line">    option type &#39;bridge&#39;</span><br><span class="line">    option ifname &#39;eth0&#39;</span><br><span class="line">    option proto &#39;static&#39;</span><br><span class="line">    option ipaddr &#39;192.168.2.1&#39;</span><br><span class="line">    option netmask &#39;255.255.255.0&#39;</span><br></pre></td></tr></table></figure>
 
-<p>退出OpenWRT容器，通过<code>docker restart owrt</code>命令重启，即可更新网络配置。此时即可通过浏览器访问OpenWRT的控制网页了。</p>
+<p>退出OpenWRT容器，通过 <code>docker restart owrt</code>命令重启，即可更新网络配置。此时即可通过浏览器访问OpenWRT的控制网页了。</p>
 <h2 id="配置外部网络"><a href="#配置外部网络" class="headerlink" title="配置外部网络"></a>配置外部网络</h2><h4 id="配置校园网"><a href="#配置校园网" class="headerlink" title="配置校园网"></a>配置校园网</h4><p>首先配置wan口的网络。添加一个新接口（或者可能已经有wan口了，用那个就好），名称为wan，接口协议选择DHCP客户端，物理接口选择eth1。同时，防火墙需要选择wan区域。</p>
 <p>如果网络正常的话，保存应用后就应该能看到wan口分配的IP了。当然，此时还是不能上网的。</p>
-<p>进入<code>网络-DHCP/DNS</code>页，找到“重绑定保护”这一项，取消勾选。重绑定保护会过滤掉解析为内网地址的DNS查询，但这样就无法解析校园网的网页了。</p>
-<p>此时可以试一下用电脑浏览器访问内网网站，如果访问不了的话有可能是策略路由的问题导致转发时使用的路由表与软路由本身不同。可以运行<code>ip rule add from all lookup main pref 0</code>试一下，如果还是不行就说明防火墙配置有问题，确认从lan到wan的转发是通常的。</p>
+<p>进入 <code>网络-DHCP/DNS</code>页，找到“重绑定保护”这一项，取消勾选。重绑定保护会过滤掉解析为内网地址的DNS查询，但这样就无法解析校园网的网页了。</p>
+<p>此时可以试一下用电脑浏览器访问内网网站，如果访问不了的话有可能是策略路由的问题导致转发时使用的路由表与软路由本身不同。可以运行 <code>ip rule add from all lookup main pref 0</code>试一下，如果还是不行就说明防火墙配置有问题，确认从lan到wan的转发是通常的。</p>
 <h4 id="配置L2TP"><a href="#配置L2TP" class="headerlink" title="配置L2TP"></a>配置L2TP</h4><p>回到接口配置页面，添加一个新接口，接口类型选择L2TP（如果没有可以参考之前的文章拖一个ipk进来安装，但一般全面些的OpenWRT编译都会包含这个包），账号配置参考自己环境的配置方式。有一点要注意的是L2TP下MTU不是1500，需要适当降低一些（根据Cisco的说法应该调到1460，但是我这里1440就开始出问题了），我这里直接配置了1420，可以根据实际情况慢慢调。</p>
 <p>接下来配置防火墙。L2TP的防火墙区域选择vpn（如果没有可以创建一个）。同时增加两条规则：lan可以转发到wan和vpn，不必选择IP伪装和MSS钳制；vpn可以转发到lan和wan，请选择IP伪装和MSS钳制，lan转发到wan也是同理。注意，这里一定要选择MSS钳制，因为l2tp和wan接口的MTU不同，因此需要通过MSS协商避免出现分包的情况。</p>
 <p><img src="/images/1669223046977.png" alt=""></p>
-<p>保存应用，应该就可以分配到IP地址了。如果没有，首先考虑账号设置的问题。如果现在内网畅通，但是l2tp获取不到IP，可以打开命令行，输入<code>xl2tpd</code>命令，如果出现报错，说明xl2tpd缺少依赖，需要额外安装依赖才能运行。</p>
-<p>此时应该可以ping通互联网了。如果ping不通，请首先查看路由表，确保l2tp接口作为默认路由，同时存在让l2tp服务器走内网的路由（也就是说访问l2tp服务器本身应该走校园网接口，而访问外网应该走l2tp服务器）。如果路由器本身能ping通但主机ping不通，防火墙或策略路由问题。如果ping通IP但是ping不通域名，请手动设置DNS而非自动获取。</p>
-<p>同时，有些网络问题是DNS导致的，此时可以在<code>网络-DHCP/DNS</code>设置项中覆盖默认的DNS设置。</p>
+<p>保存应用，应该就可以分配到IP地址了。如果没有，首先考虑账号设置的问题。如果现在内网畅通，但是l2tp获取不到IP，可以打开命令行，输入 <code>xl2tpd</code>命令，如果出现报错，说明xl2tpd缺少依赖，需要额外安装依赖才能运行。</p>
+<p>此时应该可以ping通互联网了。如果ping不通，请首先查看路由表，确保l2tp接口作为默认路由，同时存在让l2tp服务器走内网的路由（也就是说访问l2tp服务器本身应该走校园网接口，而访问外网应该走l2tp服务器）。如果路由器本身能ping通但主机ping不通，防火墙或策略路由问题。如果ping通IP但是ping不通域名，请手动设置DNS而非自动获取，可以在 <code>网络-DHCP/DNS</code>设置项中覆盖默认的DNS设置。</p>
 <h2 id="配置内部网络"><a href="#配置内部网络" class="headerlink" title="配置内部网络"></a>配置内部网络</h2><h4 id="工控主机与软路由互访问性"><a href="#工控主机与软路由互访问性" class="headerlink" title="工控主机与软路由互访问性"></a>工控主机与软路由互访问性</h4><p>工控主机和软路由默认情况下是无法通过macvlan通信的。如果要通信有两种方式：第一种是在宿主机中创建一个同网段的macvlan，并指定同网段内和软路由不同的IP，这样就可以实现通信。但我的机器上自从Ubuntu升级了大版本后这种方式就工作不了了，因此现在介绍另一种互访问方式。</p>
 <p>通过创建桥接网络，工控主机和软路由自然可以通信。我们在前面已经创建了名为obridge的桥接网络，现在只要为其分配IP即可。在OpenWRT中为eth2网卡创建一个接口，协议采用静态地址，防火墙区域选择lan，其他配置如下：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ip: 172.20.2.2</span><br><span class="line">mask: 255.255.255.0</span><br><span class="line">gateway: 留空</span><br></pre></td></tr></table></figure>
@@ -217,7 +216,7 @@
 <h4 id="多OpenWRT架构"><a href="#多OpenWRT架构" class="headerlink" title="多OpenWRT架构"></a>多OpenWRT架构</h4><p>多OpenWRT是为了将功能性路由和稳定性路由分开而采用的一种架构。稳定性路由运行L2TP协议，提供稳定的网络访问，而功能性路由运行去广告等高级功能，避免与L2TP等发生干扰。由于运行的J4105有较多的性能余量，因此实践下来这样的配置速度还是比较快的，个人喜欢采用这样的方式。</p>
 <p>多OpenWRT实际上也就是多了一个bridge网络，专门用于两个软路由之间的交互。稳定性路由连接外网、桥接网络，功能性路由连接桥接网络、宿主机桥接、内网。同时，功能性路由的wan口（关闭IP动态伪装和MSS钳制）即为稳定性路由的lan口（需配置路由表）。这样的配置在实现一些需求时是有用的，因此提出来供参考。</p>
 <h2 id="配置远程访问"><a href="#配置远程访问" class="headerlink" title="配置远程访问"></a>配置远程访问</h2><p>在这样的架构下，一个重要的需求就是暴露主机的远程桌面端口进行远程访问。简单的暴露方案可以用iptables或socat实现，如iptables实现方式可以在OpenWRT中的防火墙页面下，选择“通信规则”，打开端口即可。如果是多OpenWRT架构，也可以在外层配置端口转发，然后内层配置打开端口。</p>
-<p>然而更方便的个人觉得是配置OpenConnect VPN。它是Cisco AnyConnect的一个开源兼容实现，实际体验很不错。可以在OpenWRT中通过<code>luci-app-ocserv</code>这个包安装。</p>
+<p>然而更方便的个人觉得是配置OpenConnect VPN。它是Cisco AnyConnect的一个开源兼容实现，实际体验很不错。可以在OpenWRT中通过 <code>luci-app-ocserv</code>这个包安装。</p>
 <p>当然，如果有云服务器，还可以利用frp进行内网穿透。实际上玩法就比较多样了。当然，还是要注意安全问题，直接将服务暴露于公网还是比较危险的。</p>
 <h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>如何配置体验最佳的有线网是一个需要不断解决的问题，当然，这样的配置也存在很多问题，比如实际上我这里的网络环境是没有IPv6的。但是整体来说我觉得在这样的配置下达到了一个可用性和复杂度的平衡，虽然过程中又踩了好多坑。不过配置网络就是程序员的大号玩具嘛……</p>
 
@@ -342,7 +341,6 @@
       	<div class="footer-right">
       		<a href="http://hexo.io/" target="_blank">Hexo</a>  Theme <a href="https://github.com/litten/hexo-theme-yilia" target="_blank">Yilia</a> by Litten
       	</div>
-		  <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener">浙ICP备20026391号-1</a>
     </div>
   </div>
 </footer>
