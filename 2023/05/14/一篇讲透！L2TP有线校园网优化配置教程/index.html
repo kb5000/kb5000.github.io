@@ -6,15 +6,24 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://kb5000.github.io">
-  <title>Archives: 2019 | KB5000</title>
+  <title>一篇讲透！L2TP有线校园网优化配置教程 | KB5000</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="KB5000">
-<meta property="og:url" content="https://kb5000.github.io/archives/2019/index.html">
+  <meta name="description" content="好久没更新了，因为又搬回了用L2TP上校园网的环境，所以重新配置了一下有线网络。本文提供一个基于OpenWRT软路由的解决方案，希望对你有所帮助。 本文涉及VLAN交换机、Docker、L2TP、远程访问等多个技术，可以根据章节选择阅读需要的部分。 物理联通在此之前我是万万没想到物理联通还会出现问题的…… 问题是这样：由于我所在寝室的入户网线约有70米，网线经过长距离传输后电压下降，导致部分设备的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一篇讲透！L2TP有线校园网优化配置教程">
+<meta property="og:url" content="https://kb5000.github.io/2023/05/14/%E4%B8%80%E7%AF%87%E8%AE%B2%E9%80%8F%EF%BC%81L2TP%E6%9C%89%E7%BA%BF%E6%A0%A1%E5%9B%AD%E7%BD%91%E4%BC%98%E5%8C%96%E9%85%8D%E7%BD%AE%E6%95%99%E7%A8%8B/index.html">
 <meta property="og:site_name" content="KB5000">
+<meta property="og:description" content="好久没更新了，因为又搬回了用L2TP上校园网的环境，所以重新配置了一下有线网络。本文提供一个基于OpenWRT软路由的解决方案，希望对你有所帮助。 本文涉及VLAN交换机、Docker、L2TP、远程访问等多个技术，可以根据章节选择阅读需要的部分。 物理联通在此之前我是万万没想到物理联通还会出现问题的…… 问题是这样：由于我所在寝室的入户网线约有70米，网线经过长距离传输后电压下降，导致部分设备的">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://kb5000.github.io/images/l2tp-phy.drawio.png">
+<meta property="og:image" content="https://kb5000.github.io/images/1669216114608.png">
+<meta property="og:image" content="https://kb5000.github.io/images/1669216326140.png">
+<meta property="og:image" content="https://kb5000.github.io/images/1669223046977.png">
+<meta property="article:published_time" content="2023-05-14T15:42:21.567Z">
+<meta property="article:modified_time" content="2023-05-14T15:32:43.727Z">
 <meta property="article:author" content="KB5000">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://kb5000.github.io/images/l2tp-phy.drawio.png">
   
     <link rel="alternative" href="/atom.xml" title="KB5000" type="application/atom+xml">
   
@@ -128,60 +137,197 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-一篇讲透！L2TP有线校园网优化配置教程" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2019" class="archive-year">2019</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/10/21/%E5%88%A9%E7%94%A8%E8%B7%AF%E7%94%B1%E8%A1%A8%E5%AE%9E%E7%8E%B0%E6%A0%A1%E5%9B%AD%E5%86%85%E7%BD%91%E4%B8%8D%E7%BB%8F%E8%BF%87VPN/" class="archive-article-date">
-  	<time datetime="2019-10-21T15:15:52.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-10-21</time>
-</a>
-        </div>
-    	 
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/10/21/%E5%88%A9%E7%94%A8%E8%B7%AF%E7%94%B1%E8%A1%A8%E5%AE%9E%E7%8E%B0%E6%A0%A1%E5%9B%AD%E5%86%85%E7%BD%91%E4%B8%8D%E7%BB%8F%E8%BF%87VPN/">利用路由表实现校园内网不经过VPN</a>
+    <h1 class="article-title" itemprop="name">
+      一篇讲透！L2TP有线校园网优化配置教程
     </h1>
   
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">树莓派</a>
-        		</li>
-      		
-		</ul>
-	</div>
+        
+        <a href="/2023/05/14/%E4%B8%80%E7%AF%87%E8%AE%B2%E9%80%8F%EF%BC%81L2TP%E6%9C%89%E7%BA%BF%E6%A0%A1%E5%9B%AD%E7%BD%91%E4%BC%98%E5%8C%96%E9%85%8D%E7%BD%AE%E6%95%99%E7%A8%8B/" class="archive-article-date">
+  	<time datetime="2023-05-14T15:42:21.567Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-05-14</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>好久没更新了，因为又搬回了用L2TP上校园网的环境，所以重新配置了一下有线网络。本文提供一个基于OpenWRT软路由的解决方案，希望对你有所帮助。</p>
+<p>本文涉及VLAN交换机、Docker、L2TP、远程访问等多个技术，可以根据章节选择阅读需要的部分。</p>
+<h2 id="物理联通"><a href="#物理联通" class="headerlink" title="物理联通"></a>物理联通</h2><p>在此之前我是万万没想到物理联通还会出现问题的……</p>
+<p>问题是这样：由于我所在寝室的入户网线约有70米，网线经过长距离传输后电压下降，导致部分设备的网口没有办法识别，表现为网卡电源灯不亮，但网线可以通过连通性检测（报修师傅过来检测的）。</p>
+<p>解决方案：购入一款交换机。这里选择了带VLAN划分功能的交换机，之后可以做单臂路由的方案。</p>
+<p>于是，我的网络设备增加到了3台：所有网线连接到交换机上，通过VLAN划分为WAN区域和LAN区域；无线路由器提供Wi-Fi网络；J4105工控机通过OpenWRT作为主路由提供服务。</p>
+<p>网络拓扑如下图：</p>
+<p><img src="/images/l2tp-phy.drawio.png" alt=""></p>
+<p>这借助了交换机的VLAN划分功能，VLAN 1承载局域网流量，VLAN 2承载互联网流量，而软路由通过单个网线与交换机相连，作为单臂路由提供服务。由于校园网速度不超过100Mbps，因此单臂路由的方案完全够用。值得注意的是，对软路由来说，这里的VLAN 1配置为untagged，而VLAN 2配置为tagged。</p>
+<p>如不需要交换机，可以采用以软路由为主路由的方案，也就是将外网的网线连到软路由的WAN口上，同时将局域网网线通过LAN口引出，可以连接到无线路由器的LAN口（关闭无线路由器的DHCP功能，使其成为一个AP），这样能够更有效的承载外网带宽，尤其是针对千兆网络的情况下。</p>
+<p>还有一种称为“旁路由”的结构，即以其他路由器作为主路由，而软路由作为DHCP网关和DNS来运行，而所有设备处于同一个LAN下。这样配置的特点是电脑的上行流量通过软路由进行处理，而下行流量中，被软路由处理过的部分会从软路由回来，普通流量则会直接从主路由发过来，实际效率略高于单臂路由，但可能会导致软路由流量审计不准确。个人认为旁路由与单臂路由方案只是以哪个路由做NAT转换不同，所以如果有较好的前置路由做NAT的话旁路由不失为一个可行的选择。</p>
+<h2 id="工控机安装OpenWRT"><a href="#工控机安装OpenWRT" class="headerlink" title="工控机安装OpenWRT"></a>工控机安装OpenWRT</h2><p>这里采用的是工控机主机安装Ubuntu系统，运行其他服务，同时Ubuntu上安装Docker，在Docker内运行OpenWRT作为软路由。这样配置的好处是软路由可作为一个相对独立的组件，不影响主机系统。如果采用其他方案安装OpenWRT可跳过这节。</p>
+<p>首先要获取OpenWRT的系统镜像。可以在GitHub中搜索找到有人编译整合好的x86 OpenWRT镜像，这里下载到的是一个.img.gz文件，也就是硬盘镜像。</p>
+<h4 id="番外：将img硬盘镜像导入Docker"><a href="#番外：将img硬盘镜像导入Docker" class="headerlink" title="番外：将img硬盘镜像导入Docker"></a>番外：将img硬盘镜像导入Docker</h4><ol>
+<li>在Linux系统环境下得到一个img镜像，并创建一个空文件夹：<br><img src="/images/1669216114608.png" alt=""></li>
+<li>通过 <code>fdisk -lu openwrt.img</code>命令检查img文件含有的分区和位置<br><img src="/images/1669216326140.png" alt=""><br>可以看到，大小为925MB的分区应该就是根目录挂载的分区，因此只需要将该分区挂载出来即可，其他的启动分区对Docker来说没有用处。</li>
+<li>掏出计算器，根据前一张图，扇区大小为512B，而第二个分区起始位置为131584，因此需要挂载的位置为 <code>131584 * 512B = 67371008B</code>，下面通过mount命令进行挂载：<code>sudo mount -o loop,offset=67371008 openwrt.img openwrt</code>。现在通过 <code>ls openwrt</code>命令检查，即可看到已经成功挂载了。</li>
+<li>切换到 <code>openwrt</code>目录，通过 <code>sudo tar zcvf ../openwrt.tar.gz *</code>命令将该目录下所有内容打包到外面目录下的 <code>openwrt.tar.gz</code>中。注意当前的工作目录，tar打包路径不要多一层。</li>
+<li>切换到上层目录，使用 <code>sudo umount openwrt</code>停止挂载img文件。</li>
+<li>使用 <code>docker import openwrt.tar.gz openwrt:latest</code>命令将文件导入Docker，至此镜像制作完成。</li>
+</ol>
+<h4 id="创建虚拟网络"><a href="#创建虚拟网络" class="headerlink" title="创建虚拟网络"></a>创建虚拟网络</h4><p>导入为Docker镜像后，接下来是创建Docker虚拟网络。</p>
+<p>Docker虚拟网络可以分为bridge、macvlan、ipvlan、host等多种形式。对于软路由来说，常用的有macvlan和bridge两种。在这里，我使用macvlan将主机网口共享给OpenWRT，而macvlan存在难以与宿主机通信的问题，因此这里添加了一个bridge网络专门用于docker和宿主机之间的通信。</p>
+<p>创建两个macnet，分别用于untagged的VLAN 1和tagged的VLAN 2。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker network create -d macvlan --subnet 172.20.0.0/24 --gateway 172.20.0.1 -o parent=enp1s0 macnet</span><br><span class="line">docker network create -d macvlan --subnet 172.20.1.0/24 --gateway 172.20.1.1 -o parent=enp1s0.2 macnet2</span><br></pre></td></tr></table></figure>
 
-          
+<p>因为OpenWRT不会使用这里的网段设置，因此这里的subnet和gateway只要选择两个未使用的网段即可。</p>
+<p>再创建一个bridge，用于OpenWRT和宿主机的通信。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker network create -d bridge --subnet 172.20.2.0/24 --gateway 172.20.2.1 obridge</span><br></pre></td></tr></table></figure>
 
+<p>这里的subnet和gateway比较关键，gateway即为openwrt内访问宿主机的地址。</p>
+<h4 id="创建OpenWRT容器"><a href="#创建OpenWRT容器" class="headerlink" title="创建OpenWRT容器"></a>创建OpenWRT容器</h4><p>使用如下命令创建容器：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">docker run -dit --privileged --name=owrt --net=macnet --restart=always openwrt:latest /sbin/init</span><br><span class="line"></span><br><span class="line">docker network connect macnet2 owrt</span><br><span class="line"></span><br><span class="line">docker network connect obridge owrt</span><br></pre></td></tr></table></figure>
+
+<p>这里，首先将局域网macnet连接到容器内，然后依次将两个网络也连接进去。由于Docker在创建容器时只能指定一个网络，因此必须使用connect命令连接剩余的网络。</p>
+<p>此时OpenWRT应该已经运行起来了，但由于没有配置好IP，因此还无法通过浏览器访问。这里首先通过 <code>docker exec -it owrt sh</code>命令打开一个控制台，通过命令行进行配置。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&gt; vi &#x2F;etc&#x2F;config&#x2F;network</span><br><span class="line"></span><br><span class="line"># 将lan部分的ip换为192.168.2.1</span><br><span class="line">config interface &#39;lan&#39;</span><br><span class="line">    option type &#39;bridge&#39;</span><br><span class="line">    option ifname &#39;eth0&#39;</span><br><span class="line">    option proto &#39;static&#39;</span><br><span class="line">    option ipaddr &#39;192.168.2.1&#39;</span><br><span class="line">    option netmask &#39;255.255.255.0&#39;</span><br></pre></td></tr></table></figure>
+
+<p>退出OpenWRT容器，通过 <code>docker restart owrt</code>命令重启，即可更新网络配置。此时即可通过浏览器访问OpenWRT的控制网页了。</p>
+<h2 id="配置外部网络"><a href="#配置外部网络" class="headerlink" title="配置外部网络"></a>配置外部网络</h2><h4 id="配置校园网"><a href="#配置校园网" class="headerlink" title="配置校园网"></a>配置校园网</h4><p>首先配置wan口的网络。添加一个新接口（或者可能已经有wan口了，用那个就好），名称为wan，接口协议选择DHCP客户端，物理接口选择eth1。同时，防火墙需要选择wan区域。</p>
+<p>如果网络正常的话，保存应用后就应该能看到wan口分配的IP了。当然，此时还是不能上网的。</p>
+<p>进入 <code>网络-DHCP/DNS</code>页，找到“重绑定保护”这一项，取消勾选。重绑定保护会过滤掉解析为内网地址的DNS查询，但这样就无法解析校园网的网页了。</p>
+<p>此时可以试一下用电脑浏览器访问内网网站，如果访问不了的话有可能是策略路由的问题导致转发时使用的路由表与软路由本身不同。可以运行 <code>ip rule add from all lookup main pref 0</code>试一下，如果还是不行就说明防火墙配置有问题，确认从lan到wan的转发是通常的。</p>
+<h4 id="配置L2TP"><a href="#配置L2TP" class="headerlink" title="配置L2TP"></a>配置L2TP</h4><p>回到接口配置页面，添加一个新接口，接口类型选择L2TP（如果没有可以参考之前的文章拖一个ipk进来安装，但一般全面些的OpenWRT编译都会包含这个包），账号配置参考自己环境的配置方式。有一点要注意的是L2TP下MTU不是1500，需要适当降低一些（根据Cisco的说法应该调到1460，但是我这里1440就开始出问题了），我这里直接配置了1420，可以根据实际情况慢慢调。</p>
+<p>接下来配置防火墙。L2TP的防火墙区域选择vpn（如果没有可以创建一个）。同时增加两条规则：lan可以转发到wan和vpn，不必选择IP伪装和MSS钳制；vpn可以转发到lan和wan，请选择IP伪装和MSS钳制，lan转发到wan也是同理。注意，这里一定要选择MSS钳制，因为l2tp和wan接口的MTU不同，因此需要通过MSS协商避免出现分包的情况。</p>
+<p><img src="/images/1669223046977.png" alt=""></p>
+<p>保存应用，应该就可以分配到IP地址了。如果没有，首先考虑账号设置的问题。如果现在内网畅通，但是l2tp获取不到IP，可以打开命令行，输入 <code>xl2tpd</code>命令，如果出现报错，说明xl2tpd缺少依赖，需要额外安装依赖才能运行。</p>
+<p>此时应该可以ping通互联网了。如果ping不通，请首先查看路由表，确保l2tp接口作为默认路由，同时存在让l2tp服务器走内网的路由（也就是说访问l2tp服务器本身应该走校园网接口，而访问外网应该走l2tp服务器）。如果路由器本身能ping通但主机ping不通，防火墙或策略路由问题。如果ping通IP但是ping不通域名，请手动设置DNS而非自动获取，可以在 <code>网络-DHCP/DNS</code>设置项中覆盖默认的DNS设置。</p>
+<h2 id="配置内部网络"><a href="#配置内部网络" class="headerlink" title="配置内部网络"></a>配置内部网络</h2><h4 id="工控主机与软路由互访问性"><a href="#工控主机与软路由互访问性" class="headerlink" title="工控主机与软路由互访问性"></a>工控主机与软路由互访问性</h4><p>工控主机和软路由默认情况下是无法通过macvlan通信的。如果要通信有两种方式：第一种是在宿主机中创建一个同网段的macvlan，并指定同网段内和软路由不同的IP，这样就可以实现通信。但我的机器上自从Ubuntu升级了大版本后这种方式就工作不了了，因此现在介绍另一种互访问方式。</p>
+<p>通过创建桥接网络，工控主机和软路由自然可以通信。我们在前面已经创建了名为obridge的桥接网络，现在只要为其分配IP即可。在OpenWRT中为eth2网卡创建一个接口，协议采用静态地址，防火墙区域选择lan，其他配置如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ip: 172.20.2.2</span><br><span class="line">mask: 255.255.255.0</span><br><span class="line">gateway: 留空</span><br></pre></td></tr></table></figure>
+
+<p>同时，在宿主机配置如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo route add default gw 172.20.2.2</span><br><span class="line">sudo route add 192.168.2.1 gw 172.20.2.2</span><br></pre></td></tr></table></figure>
+
+<p>这样，宿主机就可以通过bridge桥接网络访问软路由，进而访问网络了。</p>
+<h4 id="多OpenWRT架构"><a href="#多OpenWRT架构" class="headerlink" title="多OpenWRT架构"></a>多OpenWRT架构</h4><p>多OpenWRT是为了将功能性路由和稳定性路由分开而采用的一种架构。稳定性路由运行L2TP协议，提供稳定的网络访问，而功能性路由运行去广告等高级功能，避免与L2TP等发生干扰。由于运行的J4105有较多的性能余量，因此实践下来这样的配置速度还是比较快的，个人喜欢采用这样的方式。</p>
+<p>多OpenWRT实际上也就是多了一个bridge网络，专门用于两个软路由之间的交互。稳定性路由连接外网、桥接网络，功能性路由连接桥接网络、宿主机桥接、内网。同时，功能性路由的wan口（关闭IP动态伪装和MSS钳制）即为稳定性路由的lan口（需配置路由表）。这样的配置在实现一些需求时是有用的，因此提出来供参考。</p>
+<h2 id="配置远程访问"><a href="#配置远程访问" class="headerlink" title="配置远程访问"></a>配置远程访问</h2><p>在这样的架构下，一个重要的需求就是暴露主机的远程桌面端口进行远程访问。简单的暴露方案可以用iptables或socat实现，如iptables实现方式可以在OpenWRT中的防火墙页面下，选择“通信规则”，打开端口即可。如果是多OpenWRT架构，也可以在外层配置端口转发，然后内层配置打开端口。</p>
+<p>然而更方便的个人觉得是配置OpenConnect VPN。它是Cisco AnyConnect的一个开源兼容实现，实际体验很不错。可以在OpenWRT中通过 <code>luci-app-ocserv</code>这个包安装。</p>
+<p>当然，如果有云服务器，还可以利用frp进行内网穿透。实际上玩法就比较多样了。当然，还是要注意安全问题，直接将服务暴露于公网还是比较危险的。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>如何配置体验最佳的有线网是一个需要不断解决的问题，当然，这样的配置也存在很多问题，比如实际上我这里的网络环境是没有IPv6的。但是整体来说我觉得在这样的配置下达到了一个可用性和复杂度的平衡，虽然过程中又踩了好多坑。不过配置网络就是程序员的大号玩具嘛……</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
+  
+<nav id="article-nav">
+  
+    <a href="/2023/05/14/%E4%B8%B2%E5%8F%A3%E4%B8%8A%E7%BD%91%E5%AE%9E%E9%AA%8C/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          串口上网实验
+        
+      </div>
+    </a>
   
   
-    </div></section>
+    <a href="/2023/05/14/%E2%80%9C%E5%9C%9F%E5%88%B6VPN%E2%80%9D%EF%BC%9A%E5%9F%BA%E4%BA%8ETLS%E6%B5%81%E7%9A%84PPP%E5%B0%81%E8%A3%85/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">“土制VPN”：基于TLS流的PPP封装</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+  
+  
   
 
-    
+  
+
+  
+
+  
 
 
           </div>
@@ -204,8 +350,8 @@
 	var yiliaConfig = {
 		mathjax: true,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,
