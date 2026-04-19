@@ -780,18 +780,29 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>最近在宿舍添置了一台路由器。。结果现在的问题就是访问校内网络时候不能享受到20MB/s的内网速度了。所以找了一下，用路由表编辑是可行的。</p>
-<p>首先我们进入路由器的后台（openwrt环境，包含busybox），利用<code>route</code>命令查看一下原有的路由表</p>
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>最近在宿舍添置了一台路由器。。结果现在的问题就是访问校内网络时候不能享受到20MB/s的内网速度了。所以找了一下，用路由表编辑是可行的。</p>
+<p>首先我们进入路由器的后台（openwrt环境，包含busybox），利用 <code>route</code>命令查看一下原有的路由表</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Kernel IP routing table</span><br><span class="line">Destination     Gateway         Genmask         Flags Metric Ref    Use Iface</span><br><span class="line">default         *               0.0.0.0         U     0      0        0 l2tp-vpn</span><br><span class="line">10.0.2.73       10.171.32.1     255.255.255.255 UGH   0      0        0 eth2.2</span><br><span class="line">10.0.2.73       *               255.255.255.255 UH    0      0        0 l2tp-vpn</span><br><span class="line">10.171.32.0     *               255.255.240.0   U     0      0        0 eth2.2</span><br><span class="line">192.168.199.0   *               255.255.255.0   U     0      0        0 br-lan</span><br><span class="line">192.168.200.0   *               255.255.255.0   U     0      0        0 br-lan1</span><br></pre></td></tr></table></figure>
 
 <p>可以看到现在所有的外网和内网IP都是走VPN的。最简单的方案就是按照下列添加路由表：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">route add -net 10.0.0.0&#x2F;8 gw 10.171.32.1 dev eth2.2</span><br></pre></td></tr></table></figure>
 
-<p>但是，在重新连接之后网关IP会改变，我们可以使用另一种方式，也就是黑名单的实现方式。<br>我们知道，对于IP<code>10.0.0.0/8</code>，其第一个字节对应的二进制位为<code>00001010</code>，我们可以求反向的IP及其掩码。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">10000000	128.0.0.0&#x2F;1</span><br><span class="line">01000000	64.0.0.0&#x2F;2</span><br><span class="line">00100000	32.0.0.0&#x2F;3</span><br><span class="line">00010000	16.0.0.0&#x2F;4</span><br><span class="line">00001100	12.0.0.0&#x2F;6</span><br><span class="line">00001011	11.0.0.0&#x2F;8</span><br><span class="line">00001000	8.0.0.0&#x2F;7</span><br><span class="line">00000100	4.0.0.0&#x2F;6</span><br><span class="line">00000010	2.0.0.0&#x2F;7</span><br><span class="line">00000000	0.0.0.0&#x2F;7</span><br></pre></td></tr></table></figure>
+<p>但是，在重新连接之后网关IP会改变，我们可以使用另一种方式，也就是黑名单的实现方式。<br>我们知道，对于IP <code>10.0.0.0/8</code>，其第一个字节对应的二进制位为 <code>00001010</code>，我们可以求反向的IP及其掩码。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">10000000	128.0.0.0&#x2F;1</span><br><span class="line">01000000	64.0.0.0&#x2F;2</span><br><span class="line">00100000	32.0.0.0&#x2F;3</span><br><span class="line">00010000	16.0.0.0&#x2F;4</span><br><span class="line">00001100	12.0.0.0&#x2F;6</span><br><span class="line">00001011	11.0.0.0&#x2F;8</span><br><span class="line">00001000	8.0.0.0&#x2F;7</span><br><span class="line">00000000	0.0.0.0&#x2F;5</span><br></pre></td></tr></table></figure>
 
-<p>我们只需对上述10条做VPN路由即可。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">route del -net 0.0.0.0&#x2F;0</span><br><span class="line">route add -net 128.0.0.0&#x2F;1 dev l2tp-vpn</span><br><span class="line">route add -net 64.0.0.0&#x2F;2 dev l2tp-vpn</span><br><span class="line">route add -net 32.0.0.0&#x2F;3 dev l2tp-vpn</span><br><span class="line">route add -net 16.0.0.0&#x2F;4 dev l2tp-vpn</span><br><span class="line">route add -net 12.0.0.0&#x2F;6 dev l2tp-vpn</span><br><span class="line">route add -net 11.0.0.0&#x2F;8 dev l2tp-vpn</span><br><span class="line">route add -net 8.0.0.0&#x2F;7 dev l2tp-vpn</span><br><span class="line">route add -net 4.0.0.0&#x2F;6 dev l2tp-vpn</span><br><span class="line">route add -net 2.0.0.0&#x2F;7 dev l2tp-vpn</span><br><span class="line">route add -net 0.0.0.0&#x2F;7 dev l2tp-vpn</span><br></pre></td></tr></table></figure>
+<p>我们只需对上述8条做VPN路由即可。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">route del -net 0.0.0.0&#x2F;0</span><br><span class="line">route add -net 128.0.0.0&#x2F;1 dev l2tp-vpn</span><br><span class="line">route add -net 64.0.0.0&#x2F;2 dev l2tp-vpn</span><br><span class="line">route add -net 32.0.0.0&#x2F;3 dev l2tp-vpn</span><br><span class="line">route add -net 16.0.0.0&#x2F;4 dev l2tp-vpn</span><br><span class="line">route add -net 12.0.0.0&#x2F;6 dev l2tp-vpn</span><br><span class="line">route add -net 11.0.0.0&#x2F;8 dev l2tp-vpn</span><br><span class="line">route add -net 8.0.0.0&#x2F;7 dev l2tp-vpn</span><br><span class="line">route add -net 0.0.0.0&#x2F;5 dev l2tp-vpn</span><br></pre></td></tr></table></figure>
+
+<h1 id="扩展：IP逆向子网算法"><a href="#扩展：IP逆向子网算法" class="headerlink" title="扩展：IP逆向子网算法"></a>扩展：IP逆向子网算法</h1><p>这个扩展是几年后写的，但是确实是最近遇到了这个问题，于是重新思考了一下。问题如下：</p>
+<blockquote>
+<p>给定一系列由CIDR确定的子网构成的数组，求所有不属于这些子网的网段的CIDR表示。</p>
+<p>示例输入：</p>
+<p>[‘10.0.0.0/8’]</p>
+<p>示例输出：</p>
+<p>[<br>  ‘0.0.0.0/5’, ‘8.0.0.0/7’, ‘11.0.0.0/8’, ‘12.0.0.0/6’,<br>  ‘16.0.0.0/4’, ‘32.0.0.0/3’, ‘64.0.0.0/2’, ‘128.0.0.0/1’<br>]</p>
+</blockquote>
+<h2 id="计算给定网段的CIDR表示"><a href="#计算给定网段的CIDR表示" class="headerlink" title="计算给定网段的CIDR表示"></a>计算给定网段的CIDR表示</h2><p>为了解决题目中的问题，我们首先解决包含问题：给定一个IP地址范围，用CIDR网段来表示。</p>
+
       
 
       
@@ -854,7 +865,7 @@
   <div class="outer">
     <div id="footer-info">
     	<div class="footer-left">
-    		&copy; 2023 KB5000
+    		&copy; 2026 KB5000
     	</div>
       	<div class="footer-right">
       		<a href="http://hexo.io/" target="_blank">Hexo</a>  Theme <a href="https://github.com/litten/hexo-theme-yilia" target="_blank">Yilia</a> by Litten
